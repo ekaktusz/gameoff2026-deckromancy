@@ -1,3 +1,25 @@
 [gd_scene format=3 uid="uid://4cwl0rool5pa"]
 
-[node name="MapScene" type="Node2D" unique_id=287062539]
+[ext_resource type="Script" path="res://Scenes/Map/map_view.gd" id="1"]
+
+[node name="MapScene" type="VBoxContainer" unique_id=287062539]
+theme_override_constants/separation = 20
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+theme_override_font_sizes/font_size = 52
+text = "The city"
+
+[node name="Encounters" type="Label" parent="."]
+theme_override_constants/line_spacing = 12
+
+[node name="Army" type="Label" parent="."]
+theme_override_constants/line_spacing = 8
+
+[node name="Action" type="Button" parent="."]
+custom_minimum_size = Vector2(244, 52)
+size_flags_horizontal = 0
+disabled = true
+text = "Fight"
+
+[connection signal="pressed" from="Action" to="." method="_on_action_pressed"]
