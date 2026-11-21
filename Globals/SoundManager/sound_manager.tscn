@@ -9,4 +9,5 @@ click_sound = ExtResource("2_ojf7o")
 
 [node name="SfxPlayer" type="AudioStreamPlayer" parent="."]
 process_mode = 3
+process_mode = 3
 bus = &"SFX"

@@ -24,9 +24,13 @@ func open_menu(menu) -> void:
 
 	menu_stack.push_back(menu)
 	menu.show()
+	get_tree().paused = true
 
 
 func go_back() -> void:
+	if menu_stack.is_empty():
+		return
+
 	var current_menu = menu_stack.pop_back()
 	current_menu.hide()
 

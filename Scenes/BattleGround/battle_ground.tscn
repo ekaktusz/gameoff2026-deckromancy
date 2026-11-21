@@ -1,3 +1,39 @@
 [gd_scene format=3 uid="uid://b0hegqgg2q6xr"]
 
-[node name="BattleGround" type="Node2D" unique_id=419032944]
+[ext_resource type="Script" path="res://Scenes/BattleGround/battle_view.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Graveyard/graveyard_scene.tscn" id="2"]
+
+[node name="BattleGround" type="VBoxContainer" unique_id=419032944]
+theme_override_constants/separation = 14
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+theme_override_font_sizes/font_size = 52
+text = "Battlefield"
+
+[node name="Status" type="Label" parent="."]
+autowrap_mode = 2
+
+[node name="EnemyLabel" type="Label" parent="."]
+text = "Enemy formation"
+
+[node name="Enemies" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+
+[node name="AllyLabel" type="Label" parent="."]
+text = "Your formation"
+
+[node name="Allies" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+
+[node name="Action" type="Button" parent="."]
+custom_minimum_size = Vector2(244, 52)
+size_flags_horizontal = 0
+disabled = true
+text = "Resolve round"
+
+[node name="Graveyard" parent="." instance=ExtResource("2")]
+visible = false
+
+[connection signal="pressed" from="Action" to="." method="_on_action_pressed"]
+[connection signal="raise_requested" from="Graveyard" to="." method="_on_raise_requested"]

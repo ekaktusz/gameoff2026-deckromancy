@@ -1,3 +1,9 @@
 [gd_scene format=3 uid="uid://bp1drpjmbikrl"]
 
-[node name="CardScene" type="Node2D" unique_id=767474810]
+[ext_resource type="Script" path="res://Scenes/Card/card_view.gd" id="1"]
+
+[node name="CardScene" type="Button" unique_id=767474810]
+custom_minimum_size = Vector2(214, 106)
+size_flags_horizontal = 3
+text = "Empty"
+script = ExtResource("1")

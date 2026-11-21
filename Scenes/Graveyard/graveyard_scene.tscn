@@ -1,3 +1,29 @@
 [gd_scene format=3 uid="uid://b4elffvigrcqs"]
 
-[node name="GraveyardScene" type="Node2D" unique_id=248972688]
+[ext_resource type="Script" path="res://Scenes/Graveyard/graveyard_view.gd" id="1"]
+
+[node name="GraveyardScene" type="VBoxContainer" unique_id=248972688]
+theme_override_constants/separation = 14
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+theme_override_font_sizes/font_size = 42
+text = "Graveyard"
+
+[node name="Status" type="Label" parent="."]
+
+[node name="Army" type="Label" parent="."]
+visible = false
+autowrap_mode = 2
+
+[node name="Cards" type="HFlowContainer" parent="."]
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="Continue" type="Button" parent="."]
+visible = false
+custom_minimum_size = Vector2(244, 52)
+size_flags_horizontal = 0
+text = "Enter the city"
+
+[connection signal="pressed" from="Continue" to="." method="_on_continue_pressed"]
