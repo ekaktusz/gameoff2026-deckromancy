@@ -44,10 +44,10 @@ _data = {
 [node name="IntroScene" type="Control" unique_id=1459992814]
 layout_mode = 3
 anchors_preset = 0
-offset_left = -429.0
-offset_top = -240.0
-offset_right = -429.0
-offset_bottom = -240.0
+offset_left = -35.0
+offset_top = 11.0
+offset_right = -35.0
+offset_bottom = 11.0
 script = ExtResource("1_htspg")
 
 [node name="Background" type="ColorRect" parent="." unique_id=2009617200]
