@@ -18,4 +18,4 @@ func display(unit: UnitState, for_revival: bool = false) -> void:
 
 	text = "%s\n%d ATK   %d HP" % [name_and_marks, stats.x, stats.y]
 	if for_revival:
-		text += "\nRaise · 1 RP"
+		text += "\nRaise · 1 RiP"

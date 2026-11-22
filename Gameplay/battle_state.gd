@@ -9,6 +9,8 @@ var allies: Array[UnitState] = []
 var enemies: Array[UnitState] = []
 var graveyard: Array[UnitState] = []
 var round_number: int = 0
+# Empty enemy slots that already paid out RiP this battle.
+var rewarded_columns: Array[int] = []
 
 
 func _init(deck_run: DeckRun, battle_encounter: EncounterDefinition) -> void:
@@ -43,7 +45,17 @@ func resolve_round() -> void:
 	for column in COLUMN_COUNT:
 		var ally := allies[column]
 		var enemy := enemies[column]
-		if ally == null or enemy == null:
+		if ally == null and enemy == null:
+			continue
+		# Hitting an empty slot gains RiP once per slot per battle;
+		# an enemy hitting an empty slot always costs RiP.
+		if enemy == null:
+			if not rewarded_columns.has(column):
+				rewarded_columns.append(column)
+				run.add_rp(1)
+			continue
+		if ally == null:
+			run.add_rp(-1)
 			continue
 
 		# The defender always retaliates, even when the attack kills it.
@@ -54,7 +66,7 @@ func resolve_round() -> void:
 			enemies[column] = null
 			graveyard.append(enemy)
 			if enemy.revivals == 0:
-				run.rp += 1
+				run.add_rp(1)
 
 		if ally.hp == 0:
 			allies[column] = null
