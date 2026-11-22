@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="UnitDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitDefinition" format=3 uid="uid://drdbdpvxfl11o"]
 
-[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://d3hynmklnka5y" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://7b4rll7olcmu" path="res://assets/scorpion.png" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -8,3 +9,4 @@ title = "Silt Guard"
 attack = 6
 hp = 7
 shift = 1
+portrait = ExtResource("2")

@@ -38,16 +38,22 @@ func swap_allies(first: int, second: int) -> void:
 	allies[second] = unit
 
 
-func resolve_round() -> void:
+## Resolves one round and returns what happened, in play order: shifts first,
+## then each column from left to right (attack, retaliation, deaths, RiP).
+func resolve_round() -> Array[BattleEvent]:
+	var events: Array[BattleEvent] = []
 	if run.army.is_empty() or enemies_defeated():
-		return
+		return events
 
 	round_number += 1
 	# The player's arrangement fights as set in round 1; units shift from round 2 on.
 	last_shift_count = 0
 	if round_number > 1:
-		last_shift_count = _shift_row(allies) + _shift_row(enemies)
-	_align_unopposed_formations()
+		last_shift_count = (
+			_shift_row(allies, BattleEvent.Side.ALLY, events)
+			+ _shift_row(enemies, BattleEvent.Side.ENEMY, events)
+		)
+	_align_unopposed_formations(events)
 	for column in COLUMN_COUNT:
 		var ally := allies[column]
 		var enemy := enemies[column]
@@ -56,39 +62,73 @@ func resolve_round() -> void:
 		# Hitting an empty slot gains RiP once per slot per battle;
 		# an enemy hitting an empty slot always costs RiP.
 		if enemy == null:
+			events.append(_attack_event(BattleEvent.Side.ALLY, ally, null, column))
 			if not rewarded_columns.has(column):
 				rewarded_columns.append(column)
-				run.add_rp(1)
+				_change_rp(1, BattleEvent.Side.ALLY, column, events)
 			continue
 		if ally == null:
-			run.add_rp(-1)
+			events.append(_attack_event(BattleEvent.Side.ENEMY, enemy, null, column))
+			_change_rp(-1, BattleEvent.Side.ENEMY, column, events)
 			continue
 
 		# The defender always retaliates, even when the attack kills it.
 		enemy.hp = maxi(0, enemy.hp - ally.attack)
+		events.append(_attack_event(BattleEvent.Side.ALLY, ally, enemy, column))
 		ally.hp = maxi(0, ally.hp - enemy.attack)
+		events.append(_attack_event(BattleEvent.Side.ENEMY, enemy, ally, column))
 
 		if enemy.hp == 0:
 			enemies[column] = null
 			graveyard.append(enemy)
+			events.append(
+				BattleEvent.new(BattleEvent.Kind.DEATH, BattleEvent.Side.ENEMY, enemy, column)
+			)
 			if enemy.revivals == 0:
-				run.add_rp(1)
+				_change_rp(1, BattleEvent.Side.ALLY, column, events)
 
 		if ally.hp == 0:
 			allies[column] = null
 			run.army.erase(ally)
 			graveyard.append(ally)
+			events.append(
+				BattleEvent.new(BattleEvent.Kind.DEATH, BattleEvent.Side.ALLY, ally, column)
+			)
+	return events
 
 
-func try_raise(unit: UnitState) -> bool:
+## Raises a unit from this battle's graveyard into the first empty ally slot.
+## Returns that column, or -1 when the unit cannot be raised.
+func try_raise(unit: UnitState) -> int:
 	if round_number == 0:
-		return false
+		return -1
 
 	var empty_column := allies.find(null)
 	if empty_column == -1 or not run.try_raise(unit, graveyard):
-		return false
+		return -1
 	allies[empty_column] = unit
-	return true
+	return empty_column
+
+
+func _attack_event(side: int, attacker: UnitState, defender: UnitState, column: int) -> BattleEvent:
+	var event := BattleEvent.new(BattleEvent.Kind.ATTACK, side, attacker, column, attacker.attack)
+	event.target = defender
+	return event
+
+
+func _shift_event(side: int, unit: UnitState, from: int, to: int) -> BattleEvent:
+	var event := BattleEvent.new(BattleEvent.Kind.SHIFT, side, unit, from)
+	event.to_column = to
+	return event
+
+
+## Applies a RiP change and records it only when the amount actually changed,
+## so the cap and the zero floor do not show phantom gains or losses.
+func _change_rp(amount: int, side: int, column: int, events: Array[BattleEvent]) -> void:
+	var before := run.rp
+	run.add_rp(amount)
+	if run.rp != before:
+		events.append(BattleEvent.new(BattleEvent.Kind.RIP, side, null, column, run.rp - before))
 
 
 ## Moves every unit one slot in its shift direction. Bounce units facing the
@@ -96,7 +136,7 @@ func try_raise(unit: UnitState) -> bool:
 ## Everyone else resolves left movers from the left and right movers from the
 ## right, so a line heading the same way moves together, and only enters an
 ## empty slot; otherwise it stays put.
-func _shift_row(row: Array[UnitState]) -> int:
+func _shift_row(row: Array[UnitState], side: int, events: Array[BattleEvent]) -> int:
 	_turn_bounce_units_at_edges(row)
 	var handled: Array[UnitState] = []
 	var moves := 0
@@ -109,6 +149,8 @@ func _shift_row(row: Array[UnitState]) -> int:
 		if left.shift_direction == 1 and right.shift_direction == -1:
 			row[column] = right
 			row[column + 1] = left
+			events.append(_shift_event(side, left, column, column + 1))
+			events.append(_shift_event(side, right, column + 1, column))
 			handled.append(left)
 			handled.append(right)
 			moves += 2
@@ -126,6 +168,7 @@ func _shift_row(row: Array[UnitState]) -> int:
 			if target >= 0 and target < COLUMN_COUNT and row[target] == null:
 				row[target] = unit
 				row[column] = null
+				events.append(_shift_event(side, unit, column, target))
 				moves += 1
 	return moves
 
@@ -142,7 +185,7 @@ func _turn_bounce_units_at_edges(row: Array[UnitState]) -> void:
 
 ## Fallback when no column has units on both sides after shifting, so two
 ## formations that never meet cannot stall the fight.
-func _align_unopposed_formations() -> void:
+func _align_unopposed_formations(events: Array[BattleEvent]) -> void:
 	var first_ally := -1
 	var first_enemy := -1
 	for column in COLUMN_COUNT:
@@ -155,3 +198,4 @@ func _align_unopposed_formations() -> void:
 
 	allies[first_enemy] = allies[first_ally]
 	allies[first_ally] = null
+	events.append(_shift_event(BattleEvent.Side.ALLY, allies[first_enemy], first_ally, first_enemy))

@@ -9,9 +9,10 @@ const BATTLE := preload("res://Scenes/BattleGround/battle_ground.tscn")
 
 var _run: DeckRun
 var _starting_graveyard: Array[UnitState] = []
-var _screen: Control
+var _screen: CanvasItem
 
 @onready var _screen_container: MarginContainer = $Screen
+@onready var _world: Node2D = $World
 
 
 func _ready() -> void:
@@ -60,9 +61,14 @@ func _on_battle_finished(won: bool) -> void:
 	_show_map()
 
 
-func _show_screen(screen: Control) -> void:
+## Control screens (the map) go into the margin container; Node2D screens
+## (graveyard, battle) are placed in world space at the viewport origin.
+func _show_screen(screen: CanvasItem) -> void:
 	if _screen != null:
-		_screen_container.remove_child(_screen)
+		_screen.get_parent().remove_child(_screen)
 		_screen.queue_free()
 	_screen = screen
-	_screen_container.add_child(screen)
+	if screen is Control:
+		_screen_container.add_child(screen)
+	else:
+		_world.add_child(screen)

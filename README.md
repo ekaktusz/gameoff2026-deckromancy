@@ -16,11 +16,23 @@ while iterating.
 | --- | --- |
 | Screen flow and encounter order | `game_loop.gd`, `game_loop.tscn` |
 | Combat, resurrection, and run state | `Gameplay/` |
-| Unit names and starting stats | `Gameplay/Units/*.tres` |
-| Editable screen layouts and card UI | `Scenes/` |
+| Unit names, starting stats, shift and portraits | `Gameplay/Units/*.tres` |
+| Card look and card animations | `Scenes/Card/card_2d.tscn`, `card_2d.gd` |
+| Battle board, slot layout and round playback | `Scenes/BattleGround/` |
+| Graveyard grid (start of run and in battle) | `Scenes/Graveyard/` |
+| City map | `Scenes/Map/` |
+| Sound effects (generated: hit, empty hit, shift, hover, select, RiP gain/loss) | `assets/sfx/`, regenerate with `python3 tools/generate_hit_sfx.py` |
 
 Edit **Starting Units** and **Encounters** on the GameLoop node in the inspector
 to change the prototype content. Each encounter supports up to five enemies.
+
+The graveyard and battle screens are Node2D scenes. Each unit's **Art** group
+sets its `portrait`, an optional `marked_portrait` shown once it carries a MARK
+(otherwise the portrait is tinted), and a `portrait_tint`. Slot positions are
+the `Slot0`–`Slot4` markers under `EnemySlots` and `AllySlots` in
+`battle_ground.tscn`. `ANIM_SPEED` in `battle_view.gd` scales every battle
+animation. The battle logic returns a list of `BattleEvent`s per round, which the
+battle screen plays back in order.
 
 Resurrection Points are called RiP in game. The prototype uses 3 starting RiP,
 holds at most 5 (extra gains are lost), and awards 1 RiP for an unmarked enemy
