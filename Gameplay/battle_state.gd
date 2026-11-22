@@ -11,6 +11,8 @@ var graveyard: Array[UnitState] = []
 var round_number: int = 0
 # Empty enemy slots that already paid out RiP this battle.
 var rewarded_columns: Array[int] = []
+## Units on both rows that changed column in the latest round.
+var last_shift_count: int = 0
 
 
 func _init(deck_run: DeckRun, battle_encounter: EncounterDefinition) -> void:
@@ -41,6 +43,10 @@ func resolve_round() -> void:
 		return
 
 	round_number += 1
+	# The player's arrangement fights as set in round 1; units shift from round 2 on.
+	last_shift_count = 0
+	if round_number > 1:
+		last_shift_count = _shift_row(allies) + _shift_row(enemies)
 	_align_unopposed_formations()
 	for column in COLUMN_COUNT:
 		var ally := allies[column]
@@ -85,6 +91,57 @@ func try_raise(unit: UnitState) -> bool:
 	return true
 
 
+## Moves every unit one slot in its shift direction. Bounce units facing the
+## edge turn around first. Two neighbours heading toward each other swap places.
+## Everyone else resolves left movers from the left and right movers from the
+## right, so a line heading the same way moves together, and only enters an
+## empty slot; otherwise it stays put.
+func _shift_row(row: Array[UnitState]) -> int:
+	_turn_bounce_units_at_edges(row)
+	var handled: Array[UnitState] = []
+	var moves := 0
+
+	for column in COLUMN_COUNT - 1:
+		var left := row[column]
+		var right := row[column + 1]
+		if left == null or right == null or handled.has(left):
+			continue
+		if left.shift_direction == 1 and right.shift_direction == -1:
+			row[column] = right
+			row[column + 1] = left
+			handled.append(left)
+			handled.append(right)
+			moves += 2
+
+	for direction: int in [-1, 1]:
+		var columns: Array = range(COLUMN_COUNT)
+		if direction == 1:
+			columns.reverse()
+		for column: int in columns:
+			var unit := row[column]
+			if unit == null or unit.shift_direction != direction or handled.has(unit):
+				continue
+			handled.append(unit)
+			var target := column + direction
+			if target >= 0 and target < COLUMN_COUNT and row[target] == null:
+				row[target] = unit
+				row[column] = null
+				moves += 1
+	return moves
+
+
+func _turn_bounce_units_at_edges(row: Array[UnitState]) -> void:
+	for column: int in [0, COLUMN_COUNT - 1]:
+		var unit := row[column]
+		if unit == null or unit.definition.shift != UnitDefinition.Shift.BOUNCE:
+			continue
+		var target: int = column + unit.shift_direction
+		if target < 0 or target >= COLUMN_COUNT:
+			unit.shift_direction = -unit.shift_direction
+
+
+## Fallback when no column has units on both sides after shifting, so two
+## formations that never meet cannot stall the fight.
 func _align_unopposed_formations() -> void:
 	var first_ally := -1
 	var first_enemy := -1
@@ -96,6 +153,5 @@ func _align_unopposed_formations() -> void:
 		if first_enemy == -1 and enemies[column] != null:
 			first_enemy = column
 
-	# Temporary shift rule so separated formations can still finish the fight.
 	allies[first_enemy] = allies[first_ally]
 	allies[first_ally] = null

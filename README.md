@@ -29,12 +29,21 @@ out only once per battle; an enemy attacking an empty ally slot costs 1 RiP
 every time (never below 0).
 Defenders always retaliate, even when the attack kills them. Raised units take the first vacant slot.
 Revival percentages use the unit's base stats, rounded to the nearest whole
-number with a minimum of 1. When the formations have no opposing pair, the
-first ally moves into the first enemy's column before attacks resolve. A player
-with an empty army can still raise a creature before choosing to end the run.
-HP and unspent RiP carry into the next encounter. Each battle starts with a
-fresh graveyard. These rules are provisional while the team settles combat
-and shift behavior.
+number with a minimum of 1. A player with an empty army can still raise a
+creature before choosing to end the run. HP and unspent RiP carry into the next
+encounter. Each battle starts with a fresh graveyard.
+
+Every unit has a **Shift** pattern, set per unit in `Gameplay/Units/*.tres`:
+Hold, Left, Right, or Bounce. From round 2 on, both rows shift one slot before
+attacks; round 1 fights in the order the player arranged. A unit only moves
+into an empty slot in its own row, otherwise it stays put. Two neighbours
+heading toward each other (for example a Right unit next to a Left unit, or two
+Bounce units facing each other) swap places instead. Left movers resolve
+from the left and right movers from the right, so a line heading the same way
+moves together. Left and Right units stop at the edge; Bounce units start
+heading right and turn around at the edge. If no column has units on both
+sides after shifting, the first ally moves into the first enemy's column so
+the fight cannot stall. These rules are provisional while the team tunes them.
 
 ## TODO
 
