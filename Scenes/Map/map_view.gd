@@ -29,13 +29,8 @@ func display(run: DeckRun, encounters: Array[EncounterDefinition]) -> void:
 		route.append("%d. %s" % [index + 1, label])
 	_encounters.text = "\n".join(route)
 
-	var roster := PackedStringArray()
-	roster.append("Army (%d/%d)  ·  %d/%d RiP" % [
-		run.army.size(),
-		DeckRun.MAX_UNITS,
-		run.rp,
-		DeckRun.MAX_RP,
-	])
+	var counts := [run.army.size(), DeckRun.MAX_UNITS, run.rp, DeckRun.MAX_RP]
+	var roster := PackedStringArray(["Army (%d/%d)  ·  %d/%d RiP" % counts])
 	for unit in run.army:
 		roster.append("%s  ·  %d ATK  %d HP" % [unit.title(), unit.attack, unit.hp])
 	_army.text = "\n".join(roster)

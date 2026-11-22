@@ -53,6 +53,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 theme = SubResource("Theme_prototype")
 script = ExtResource("1")
 starting_units = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5"), ExtResource("6")])
@@ -75,10 +76,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 theme_override_constants/margin_left = 64
 theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 64
 theme_override_constants/margin_bottom = 36
+
+[node name="World" type="Node2D" parent="."]
 
 [node name="UI" type="CanvasLayer" parent="."]
 process_mode = 3

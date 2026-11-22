@@ -1,9 +1,14 @@
-[gd_resource type="Resource" script_class="UnitDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitDefinition" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/frog.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/frog_marked.png" id="3"]
 
 [resource]
 script = ExtResource("1")
 title = "Inner Gatekeeper"
 attack = 16
 hp = 26
+portrait = ExtResource("2")
+marked_portrait = ExtResource("3")
+portrait_tint = Color(1, 0.72, 0.68, 1)
