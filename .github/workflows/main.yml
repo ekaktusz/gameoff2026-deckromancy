@@ -1,34 +1,40 @@
-name: CI
+name: Desktop exports
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: 4.7.2
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-    - name: checkout
-      uses: actions/checkout@v3
-
-    - name: exportGame
-      id: export
-      uses: firebelley/godot-export@v7.0.0
-      with:
-        godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip
-        godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz
-        relative_project_path: ./
-        use_preset_export_path: true
-        verbose: true
-        archive_output: true
-
-    - name: Upload exported game
-      uses: actions/upload-artifact@v4
-      with:
-        name: exported-game
-        path: build/*
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Export desktop builds
+        id: export
+        uses: firebelley/godot-export@930577654862a320eef793f399ee911b4479efb9 # v7.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot-builds/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot-builds/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          relative_project_path: ./
+          presets_to_export: Linux,Windows Desktop
+          use_preset_export_path: true
+          verbose: true
+          archive_output: true
+      - name: Upload desktop builds
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: exported-game
+          path: ${{ steps.export.outputs.archive_directory }}
+          if-no-files-found: error
