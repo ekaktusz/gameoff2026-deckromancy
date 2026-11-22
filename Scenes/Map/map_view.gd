@@ -17,7 +17,7 @@ func display(run: DeckRun, encounters: Array[EncounterDefinition]) -> void:
 	if run.defeated:
 		_title.text = "Your army fell"
 	elif _run_finished:
-		_title.text = "The inner city is yours"
+		_title.text = "The city is yours"
 
 	var route := PackedStringArray()
 	for index in encounters.size():
@@ -30,7 +30,12 @@ func display(run: DeckRun, encounters: Array[EncounterDefinition]) -> void:
 	_encounters.text = "\n".join(route)
 
 	var roster := PackedStringArray()
-	roster.append("Army (%d/%d)  ·  %d RP" % [run.army.size(), DeckRun.MAX_UNITS, run.rp])
+	roster.append("Army (%d/%d)  ·  %d/%d RiP" % [
+		run.army.size(),
+		DeckRun.MAX_UNITS,
+		run.rp,
+		DeckRun.MAX_RP,
+	])
 	for unit in run.army:
 		roster.append("%s  ·  %d ATK  %d HP" % [unit.title(), unit.attack, unit.hp])
 	_army.text = "\n".join(roster)

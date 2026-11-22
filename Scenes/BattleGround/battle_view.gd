@@ -36,7 +36,10 @@ func _ready() -> void:
 func display(battle: BattleState) -> void:
 	_battle = battle
 	_title.text = battle.encounter.title
-	_status.text = "%d RP  ·  Select two slots to swap their positions." % battle.run.rp
+	_status.text = "%d/%d RiP  ·  Select two slots to swap their positions." % [
+		battle.run.rp,
+		DeckRun.MAX_RP,
+	]
 	_refresh()
 
 
@@ -88,8 +91,9 @@ func _on_action_pressed() -> void:
 	var previous_rp := _battle.run.rp
 	var previous_dead := _battle.graveyard.size()
 	_battle.resolve_round()
-	_status.text = "Round %d  ·  %d fallen  ·  +%d RP" % [
+	_status.text = "Round %d  ·  %d shifted  ·  %d fallen  ·  %+d RiP" % [
 		_battle.round_number,
+		_battle.last_shift_count,
 		_battle.graveyard.size() - previous_dead,
 		_battle.run.rp - previous_rp,
 	]

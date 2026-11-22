@@ -7,3 +7,4 @@ script = ExtResource("1")
 title = "Silt Guard"
 attack = 6
 hp = 7
+shift = 1

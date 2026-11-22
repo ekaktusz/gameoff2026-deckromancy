@@ -3,10 +3,12 @@
 ## Play the prototype
 
 Open the project in Godot and press **F5**, then choose **Start**. Raise at least
-one creature, enter the city, and fight through the lower streets, the gatekeeper, the inner city streets, and the
-inner gatekeeper. Before each fight, click two slots in your row to swap them. Use the
-graveyard between rounds and after the last enemy falls. Open `game_loop.tscn`
-and press **F6** to start at the graveyard while iterating.
+one creature, enter the city, and fight through six encounters: the lower
+streets, the gatekeeper, the inner city streets, the inner gatekeeper, the
+citadel streets, and the citadel lord. Before each fight, click two slots in
+your row to swap them. Use the graveyard between rounds and after the last
+enemy falls. Open `game_loop.tscn` and press **F6** to start at the graveyard
+while iterating.
 
 ## Where to work
 
@@ -20,15 +22,28 @@ and press **F6** to start at the graveyard while iterating.
 Edit **Starting Units** and **Encounters** on the GameLoop node in the inspector
 to change the prototype content. Each encounter supports up to five enemies.
 
-The prototype uses 3 starting RP and awards 1 RP for an unmarked enemy kill.
+Resurrection Points are called RiP in game. The prototype uses 3 starting RiP,
+holds at most 5 (extra gains are lost), and awards 1 RiP for an unmarked enemy
+kill. An ally attacking an empty enemy slot gains 1 RiP, but each slot pays
+out only once per battle; an enemy attacking an empty ally slot costs 1 RiP
+every time (never below 0).
 Defenders always retaliate, even when the attack kills them. Raised units take the first vacant slot.
 Revival percentages use the unit's base stats, rounded to the nearest whole
-number with a minimum of 1. When the formations have no opposing pair, the
-first ally moves into the first enemy's column before attacks resolve. A player
-with an empty army can still raise a creature before choosing to end the run.
-HP and unspent RP carry into the next encounter. Each battle starts with a
-fresh graveyard. These rules are provisional while the team settles combat
-and shift behavior.
+number with a minimum of 1. A player with an empty army can still raise a
+creature before choosing to end the run. HP and unspent RiP carry into the next
+encounter. Each battle starts with a fresh graveyard.
+
+Every unit has a **Shift** pattern, set per unit in `Gameplay/Units/*.tres`:
+Hold, Left, Right, or Bounce. From round 2 on, both rows shift one slot before
+attacks; round 1 fights in the order the player arranged. A unit only moves
+into an empty slot in its own row, otherwise it stays put. Two neighbours
+heading toward each other (for example a Right unit next to a Left unit, or two
+Bounce units facing each other) swap places instead. Left movers resolve
+from the left and right movers from the right, so a line heading the same way
+moves together. Left and Right units stop at the edge; Bounce units start
+heading right and turn around at the edge. If no column has units on both
+sides after shifting, the first ally moves into the first enemy's column so
+the fight cannot stall. These rules are provisional while the team tunes them.
 
 ## TODO
 

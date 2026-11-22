@@ -13,7 +13,12 @@ const CARD_SCENE := preload("res://Scenes/Card/card_scene.tscn")
 
 
 func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = false) -> void:
-	_status.text = "%d RP  ·  %d/%d creatures" % [run.rp, run.army.size(), DeckRun.MAX_UNITS]
+	_status.text = "%d/%d RiP  ·  %d/%d creatures" % [
+		run.rp,
+		DeckRun.MAX_RP,
+		run.army.size(),
+		DeckRun.MAX_UNITS,
+	]
 	if dead.is_empty():
 		_status.text += "  ·  No creatures to raise"
 
