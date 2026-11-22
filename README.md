@@ -21,7 +21,7 @@ Edit **Starting Units** and **Encounters** on the GameLoop node in the inspector
 to change the prototype content. Each encounter supports up to five enemies.
 
 The prototype uses 3 starting RP and awards 1 RP for an unmarked enemy kill.
-Only surviving defenders retaliate. Raised units take the first vacant slot.
+Defenders always retaliate, even when the attack kills them. Raised units take the first vacant slot.
 Revival percentages use the unit's base stats, rounded to the nearest whole
 number with a minimum of 1. When the formations have no opposing pair, the
 first ally moves into the first enemy's column before attacks resolve. A player

@@ -46,15 +46,16 @@ func resolve_round() -> void:
 		if ally == null or enemy == null:
 			continue
 
+		# The defender always retaliates, even when the attack kills it.
 		enemy.hp = maxi(0, enemy.hp - ally.attack)
+		ally.hp = maxi(0, ally.hp - enemy.attack)
+
 		if enemy.hp == 0:
 			enemies[column] = null
 			graveyard.append(enemy)
 			if enemy.revivals == 0:
 				run.rp += 1
-			continue
 
-		ally.hp = maxi(0, ally.hp - enemy.attack)
 		if ally.hp == 0:
 			allies[column] = null
 			run.army.erase(ally)
