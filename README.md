@@ -3,8 +3,8 @@
 ## Play the prototype
 
 Open the project in Godot and press **F5**, then choose **Start**. Raise at least
-one creature, enter the city, and fight through the lower streets and the
-gatekeeper. Before each fight, click two slots in your row to swap them. Use the
+one creature, enter the city, and fight through the lower streets, the gatekeeper, the inner city streets, and the
+inner gatekeeper. Before each fight, click two slots in your row to swap them. Use the
 graveyard between rounds and after the last enemy falls. Open `game_loop.tscn`
 and press **F6** to start at the graveyard while iterating.
 

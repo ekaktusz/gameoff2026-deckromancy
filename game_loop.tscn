@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://UI/ui.gd" id="8"]
 [ext_resource type="PackedScene" path="res://UI/Menus/PauseMenu/pause_menu.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://UI/Menus/SettingsMenu/settings_menu.tscn" id="10"]
+[ext_resource type="Resource" path="res://Gameplay/Units/inner_gatekeeper.tres" id="11"]
 
 [sub_resource type="Resource" id="Encounter_streets"]
 script = ExtResource("3")
@@ -20,6 +21,16 @@ enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5")])
 script = ExtResource("3")
 title = "Gatekeeper"
 enemies = Array[ExtResource("2")]([ExtResource("7")])
+
+[sub_resource type="Resource" id="Encounter_inner_streets"]
+script = ExtResource("3")
+title = "Inner city streets"
+enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("6"), ExtResource("5"), ExtResource("6")])
+
+[sub_resource type="Resource" id="Encounter_inner_gatekeeper"]
+script = ExtResource("3")
+title = "Inner gatekeeper"
+enemies = Array[ExtResource("2")]([ExtResource("5"), ExtResource("11"), ExtResource("5")])
 
 [sub_resource type="Theme" id="Theme_prototype"]
 default_font_size = 26
@@ -34,7 +45,7 @@ grow_vertical = 2
 theme = SubResource("Theme_prototype")
 script = ExtResource("1")
 starting_units = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5"), ExtResource("6")])
-encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_gatekeeper")])
+encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_gatekeeper"), SubResource("Encounter_inner_streets"), SubResource("Encounter_inner_gatekeeper")])
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1

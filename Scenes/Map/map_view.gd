@@ -17,7 +17,7 @@ func display(run: DeckRun, encounters: Array[EncounterDefinition]) -> void:
 	if run.defeated:
 		_title.text = "Your army fell"
 	elif _run_finished:
-		_title.text = "The city gate is yours"
+		_title.text = "The inner city is yours"
 
 	var route := PackedStringArray()
 	for index in encounters.size():
