@@ -1,12 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://ctox1pv7ekayq"]
+[gd_scene format=3 uid="uid://ctox1pv7ekayq"]
 
 [ext_resource type="AudioStream" uid="uid://cxxbaw3iv01fr" path="res://assets/005_theme_extended.ogg" id="1_3q6nk"]
 [ext_resource type="Script" uid="uid://gv7opb0hkkc2" path="res://Globals/MusicPlayer/music_player.gd" id="1_5rpmk"]
 
-[node name="MusicPlayer" type="Node"]
+[node name="MusicPlayer" type="Node" unique_id=396501753]
 script = ExtResource("1_5rpmk")
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=540539431]
 process_mode = 3
 stream = ExtResource("1_3q6nk")
+volume_db = -9.905
 bus = &"Music"

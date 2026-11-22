@@ -7,6 +7,14 @@ extends Node2D
 signal finished(won: bool)
 
 const CARD_SCENE := preload("res://Scenes/Card/card_2d.tscn")
+## Picks one of the generated hit sounds with a random pitch each time.
+const HIT_SFX := preload("res://assets/sfx/hit.tres")
+const SHIFT_SFX := preload("res://assets/sfx/shift.tres")
+const SELECT_SFX := preload("res://assets/sfx/select.wav")
+## An attack that lands in an empty slot (either side).
+const EMPTY_HIT_SFX := preload("res://assets/sfx/empty_hit.tres")
+const RIP_GAIN_SFX := preload("res://assets/sfx/rip_gain.wav")
+const RIP_LOSS_SFX := preload("res://assets/sfx/rip_loss.wav")
 const ALLY := BattleEvent.Side.ALLY
 const ENEMY := BattleEvent.Side.ENEMY
 ## Multiplies the speed of every battle animation. Raise it to speed up playtests.
@@ -168,6 +176,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	var column := _ally_slots.column_at(get_global_mouse_position())
 	if column != -1 and _battle.allies[column] == null:
 		get_viewport().set_input_as_handled()
+		SoundManager.play_sfx(SELECT_SFX)
 		_select_slot(column)
 
 
@@ -196,6 +205,7 @@ func _select_slot(column: int) -> void:
 			tweens.append(
 				(_cards[unit] as Card2D).move_to(_slot_position(ALLY, slot), _t(0.3), arc)
 			)
+	SoundManager.play_sfx(SHIFT_SFX)
 	await _wait_all(tweens)
 	_busy = false
 	_refresh()
@@ -299,6 +309,8 @@ func _play_shifts(shifts: Array[BattleEvent]) -> void:
 			if other != event and trades_places:
 				arc = SWAP_ARC if event.to_column > event.column else -SWAP_ARC
 		tweens.append(card.move_to(_slot_position(event.side, event.to_column), _t(0.3), arc))
+	if not tweens.is_empty():
+		SoundManager.play_sfx(SHIFT_SFX)
 	await _wait_all(tweens)
 
 
@@ -320,8 +332,10 @@ func _play_attack(event: BattleEvent) -> void:
 	var point := _slot_position(ENEMY if event.side == ALLY else ALLY, event.column)
 	var on_impact := func() -> void:
 		if defender == null:
+			SoundManager.play_sfx(EMPTY_HIT_SFX)
 			return
 		defender.hit(event.amount, _t(0.3))
+		SoundManager.play_sfx(HIT_SFX)
 		var above := defender.global_position + Vector2(0, -70)
 		FloatingText.spawn(_fx, "-%d" % event.amount, DAMAGE_COLOR, above, Vector2.INF, _t(0.8))
 	await _wait(attacker.lunge(point, _t(0.4), on_impact))
@@ -343,6 +357,7 @@ func _play_rip(event: BattleEvent) -> void:
 	var color := RIP_GAIN_COLOR if event.amount > 0 else RIP_LOSS_COLOR
 	var to := _rip.global_position + _rip.size / 2
 	await _wait(FloatingText.spawn(_fx, "%+d RiP" % event.amount, color, from, to, _t(0.7)))
+	SoundManager.play_sfx(RIP_GAIN_SFX if event.amount > 0 else RIP_LOSS_SFX)
 	_shown_rp += event.amount
 	_refresh_rip()
 

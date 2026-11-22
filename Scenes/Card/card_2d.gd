@@ -24,6 +24,8 @@ const MARKED_TINT := Color(0.72, 0.95, 0.62)
 const POOP_TINT := Color(0.62, 0.48, 0.32)
 const DIMMED := Color(0.5, 0.5, 0.5)
 const HIT_FLASH := Color(1.7, 0.5, 0.45)
+const HOVER_SFX := preload("res://assets/sfx/hover.tres")
+const SELECT_SFX := preload("res://assets/sfx/select.wav")
 
 var unit: UnitState
 var look: Look = Look.ALLY
@@ -136,12 +138,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		if inside != _hovered:
 			_hovered = inside
 			queue_redraw()
+			if inside and clickable:
+				SoundManager.play_sfx(HOVER_SFX)
 		return
 	var button := event as InputEventMouseButton
 	if button == null or not clickable or not button.pressed:
 		return
 	if button.button_index == MOUSE_BUTTON_LEFT and _contains_mouse():
 		get_viewport().set_input_as_handled()
+		SoundManager.play_sfx(SELECT_SFX)
 		clicked.emit()
 
 

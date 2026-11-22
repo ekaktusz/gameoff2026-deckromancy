@@ -21,6 +21,7 @@ while iterating.
 | Battle board, slot layout and round playback | `Scenes/BattleGround/` |
 | Graveyard grid (start of run and in battle) | `Scenes/Graveyard/` |
 | City map | `Scenes/Map/` |
+| Sound effects (generated: hit, empty hit, shift, hover, select, RiP gain/loss) | `assets/sfx/`, regenerate with `python3 tools/generate_hit_sfx.py` |
 
 Edit **Starting Units** and **Encounters** on the GameLoop node in the inspector
 to change the prototype content. Each encounter supports up to five enemies.

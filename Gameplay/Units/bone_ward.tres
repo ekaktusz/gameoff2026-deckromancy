@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="UnitDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="UnitDefinition" format=3 uid="uid://d0gjsj3aefj1l"]
 
-[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/kek_kecske.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/kecske_marked.png" id="3"]
+[ext_resource type="Script" uid="uid://d3hynmklnka5y" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://xt832ix2mxgn" path="res://assets/kek_kecske.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://npvsnepq1em" path="res://assets/kecske_marked.png" id="3"]
 
 [resource]
 script = ExtResource("1")
