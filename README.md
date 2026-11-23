@@ -57,30 +57,45 @@ heading right and turn around at the edge. If no column has units on both
 sides after shifting, the first ally moves into the first enemy's column so
 the fight cannot stall. These rules are provisional while the team tunes them.
 
+## Web export and itch.io deployment
+
+Use **Godot 4.7.2 stable** with its matching export templates. The project uses
+Compatibility rendering and the `Web` preset is single-threaded.
+
+One-time setup:
+
+1. In [itch.io project 5414022](https://itch.io/game/edit/5414022), set **Kind of
+   project** to **HTML**. Leave **SharedArrayBuffer support** off for this build.
+   Keep the page’s visibility set to what you want for the jam.
+2. Create an [itch.io API key](https://itch.io/user/settings/api-keys) under an
+   account that can upload to the project. Store it directly in [GitHub Actions
+   secrets](https://github.com/ekaktusz/gameoff2026-deckromancy/settings/secrets/actions/new)
+   as `BUTLER_API_KEY`. Never commit or share the key.
+3. Merge the workflow to `main`. Check **Actions → Web export and itch.io deploy**.
+   On itch.io, confirm the `html5` upload is marked to play in the browser, then
+   launch it from the game page. You may need to set this checkbox after the first
+   upload. Subsequent deploys update the same channel without changing visibility.
+
+Pull requests build a downloadable `deckromancy-web` artifact but never deploy.
+Pushes to `main` build and publish to the `html5` channel. To retry, use **Run
+workflow** on `main`. The workflow resolves project ID `5414022` to its itch.io
+owner and slug; it never deploys to the old sandbox target.
+
+To test locally after installing the matching export templates:
+
+```sh
+mkdir -p build/web
+godot --headless --editor --import
+godot --headless --export-release Web build/web/index.html
+python3 -m http.server --directory build/web 8000
+```
+
+Open <http://localhost:8000/>. Don’t open `index.html` directly from disk.
+
 ## TODO
 
-- [ ] Update Godot version to 4.6
 - [ ] Copy a more recent intro variant with debug skip
 
-## Tools
+## Local VS Code tasks
 
-To set up auto-deploy to itch:
-
-- [ ] In /.github/workflows/deploy.yml set and check the following settings:
-    - GODOT_VERSION
-    - EXPORT_NAME
-    - ITCH_USERNAME
-    - ITCH_GAME_ID
-
-- [ ] set the BUTLER_API_KEY
-    - generate a key at: https://itch.io/user/settings/api-keys
-    - store the repository secret on github
-
-Itch project settings
-
-- [ ] SharedArrayBuffer support" should be checked
-
-Local VSCode tasks
-
-- [ ] make sure that _godot_ is on the path
-- [ ] make sure that _gdtools_ is installed and _gdformat_ and gdlint are on the path
+Make sure `godot`, `gdformat`, and `gdlint` are on your PATH.
