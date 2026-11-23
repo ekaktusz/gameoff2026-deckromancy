@@ -7,6 +7,11 @@ const MAIN_MENU: PackedScene = preload("uid://c64idl1pun738")
 
 
 func _ready() -> void:
+	# The video can stall startup in the single-threaded Web build.
+	if OS.has_feature("web"):
+		get_tree().change_scene_to_packed.call_deferred(MAIN_MENU)
+		return
+
 	video_player.play()
 	video_player.paused = true
 
