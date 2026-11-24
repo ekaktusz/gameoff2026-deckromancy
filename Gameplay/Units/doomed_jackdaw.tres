@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitDefinition" format=3]
+
+[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/armored_crow_ai_placeholder.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+title = "Doomed Jackdaw"
+attack = 9
+hp = 5
+shift = 1
+faction = 2
+ability = 5
+portrait = ExtResource("2")
+portrait_tint = Color(0.86, 0.64, 0.69, 1)

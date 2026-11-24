@@ -9,5 +9,6 @@ script = ExtResource("1")
 title = "Bone Ward"
 attack = 4
 hp = 12
+faction = 3
 portrait = ExtResource("2")
 marked_portrait = ExtResource("3")

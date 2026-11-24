@@ -13,35 +13,188 @@
 [ext_resource type="Resource" path="res://Gameplay/Units/inner_gatekeeper.tres" id="11"]
 [ext_resource type="Resource" path="res://Gameplay/Units/citadel_lord.tres" id="12"]
 
+[ext_resource type="Resource" path="res://Gameplay/Units/shell_mender.tres" id="13"]
+[ext_resource type="Resource" path="res://Gameplay/Units/carapace_hexer.tres" id="14"]
+[ext_resource type="Resource" path="res://Gameplay/Units/ash_crow.tres" id="15"]
+[ext_resource type="Resource" path="res://Gameplay/Units/rook_captain.tres" id="16"]
+[ext_resource type="Resource" path="res://Gameplay/Units/doomed_jackdaw.tres" id="17"]
+[ext_resource type="Resource" path="res://Gameplay/Units/gutter_ram.tres" id="18"]
+
 [sub_resource type="Resource" id="Encounter_streets"]
 script = ExtResource("3")
 title = "Lower streets"
 enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5")])
+map_stage = 1
+next_lanes = PackedInt32Array(-1, 1)
+
+[sub_resource type="Resource" id="Encounter_aqueduct"]
+script = ExtResource("3")
+title = "Old aqueduct"
+enemies = Array[ExtResource("2")]([ExtResource("15"), ExtResource("4")])
+map_stage = 2
+map_lane = -1
+next_lanes = PackedInt32Array(-1, 0)
+
+[sub_resource type="Resource" id="Encounter_burial"]
+script = ExtResource("3")
+title = "Burial row"
+enemies = Array[ExtResource("2")]([ExtResource("5"), ExtResource("13")])
+map_stage = 2
+map_lane = 1
+next_lanes = PackedInt32Array(0, 1)
+
+[sub_resource type="Resource" id="Encounter_cistern"]
+script = ExtResource("3")
+title = "Flooded cistern"
+enemies = Array[ExtResource("2")]([ExtResource("14"), ExtResource("5")])
+map_stage = 3
+map_lane = -1
+next_lanes = PackedInt32Array(0)
+
+[sub_resource type="Resource" id="Encounter_market"]
+script = ExtResource("3")
+title = "Market ruins"
+enemies = Array[ExtResource("2")]([ExtResource("6"), ExtResource("16")])
+map_stage = 3
+next_lanes = PackedInt32Array(0)
+
+[sub_resource type="Resource" id="Encounter_ossuary"]
+script = ExtResource("3")
+title = "Ossuary"
+enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("4"), ExtResource("5")])
+map_stage = 3
+map_lane = 1
+next_lanes = PackedInt32Array(0)
 
 [sub_resource type="Resource" id="Encounter_gatekeeper"]
 script = ExtResource("3")
 title = "Gatekeeper"
 enemies = Array[ExtResource("2")]([ExtResource("7")])
+map_stage = 4
+is_boss = true
+next_lanes = PackedInt32Array(0)
 
 [sub_resource type="Resource" id="Encounter_inner_streets"]
 script = ExtResource("3")
 title = "Inner city streets"
 enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("6"), ExtResource("5"), ExtResource("6")])
+map_stage = 5
+next_lanes = PackedInt32Array(-1, 0, 1)
+
+[sub_resource type="Resource" id="Encounter_roofs"]
+script = ExtResource("3")
+title = "Signal roofs"
+enemies = Array[ExtResource("2")]([ExtResource("15"), ExtResource("16"), ExtResource("17")])
+map_stage = 6
+map_lane = -1
+next_lanes = PackedInt32Array(-1)
+
+[sub_resource type="Resource" id="Encounter_barracks"]
+script = ExtResource("3")
+title = "Barracks"
+enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("6"), ExtResource("5")])
+map_stage = 6
+next_lanes = PackedInt32Array(-1, 0)
+
+[sub_resource type="Resource" id="Encounter_molting"]
+script = ExtResource("3")
+title = "Molting hall"
+enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("4"), ExtResource("14")])
+map_stage = 6
+map_lane = 1
+next_lanes = PackedInt32Array(0, 1)
+
+[sub_resource type="Resource" id="Encounter_aviary"]
+script = ExtResource("3")
+title = "Aviary"
+enemies = Array[ExtResource("2")]([ExtResource("16"), ExtResource("15"), ExtResource("17")])
+map_stage = 7
+map_lane = -1
+next_lanes = PackedInt32Array(0)
+
+[sub_resource type="Resource" id="Encounter_procession"]
+script = ExtResource("3")
+title = "Procession"
+enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("6"), ExtResource("18")])
+map_stage = 7
+next_lanes = PackedInt32Array(0)
+
+[sub_resource type="Resource" id="Encounter_reliquary"]
+script = ExtResource("3")
+title = "Reliquary"
+enemies = Array[ExtResource("2")]([ExtResource("5"), ExtResource("14"), ExtResource("18")])
+map_stage = 7
+map_lane = 1
+next_lanes = PackedInt32Array(0)
 
 [sub_resource type="Resource" id="Encounter_inner_gatekeeper"]
 script = ExtResource("3")
 title = "Inner gatekeeper"
 enemies = Array[ExtResource("2")]([ExtResource("5"), ExtResource("11"), ExtResource("5")])
+map_stage = 8
+is_boss = true
+next_lanes = PackedInt32Array(-1, 1)
+
+[sub_resource type="Resource" id="Encounter_spire"]
+script = ExtResource("3")
+title = "Spire stairs"
+enemies = Array[ExtResource("2")]([ExtResource("17"), ExtResource("16"), ExtResource("15"), ExtResource("5")])
+map_stage = 9
+map_lane = -1
+next_lanes = PackedInt32Array(-1, 0)
+
+[sub_resource type="Resource" id="Encounter_underkeep"]
+script = ExtResource("3")
+title = "Underkeep"
+enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("13"), ExtResource("4"), ExtResource("14")])
+map_stage = 9
+map_lane = 1
+next_lanes = PackedInt32Array(1)
+
+[sub_resource type="Resource" id="Encounter_rookery"]
+script = ExtResource("3")
+title = "Rookery"
+enemies = Array[ExtResource("2")]([ExtResource("15"), ExtResource("16"), ExtResource("16"), ExtResource("17")])
+map_stage = 10
+map_lane = -1
+next_lanes = PackedInt32Array(0)
+
+[sub_resource type="Resource" id="Encounter_parade"]
+script = ExtResource("3")
+title = "Parade ground"
+enemies = Array[ExtResource("2")]([ExtResource("6"), ExtResource("18"), ExtResource("16"), ExtResource("5")])
+map_stage = 10
+next_lanes = PackedInt32Array(0)
+
+[sub_resource type="Resource" id="Encounter_hatchery"]
+script = ExtResource("3")
+title = "Hatchery"
+enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("14"), ExtResource("4"), ExtResource("14")])
+map_stage = 10
+map_lane = 1
+next_lanes = PackedInt32Array(0, 1)
 
 [sub_resource type="Resource" id="Encounter_citadel_streets"]
 script = ExtResource("3")
 title = "Citadel streets"
 enemies = Array[ExtResource("2")]([ExtResource("6"), ExtResource("5"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+map_stage = 11
+next_lanes = PackedInt32Array(0)
+
+[sub_resource type="Resource" id="Encounter_well"]
+script = ExtResource("3")
+title = "Well of life"
+enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("5"), ExtResource("14"), ExtResource("17")])
+map_stage = 11
+map_lane = 1
+next_lanes = PackedInt32Array(0)
 
 [sub_resource type="Resource" id="Encounter_citadel_lord"]
 script = ExtResource("3")
 title = "Citadel lord"
 enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("6"), ExtResource("12"), ExtResource("6"), ExtResource("4")])
+map_stage = 12
+is_boss = true
 
 [sub_resource type="Theme" id="Theme_prototype"]
 default_font_size = 26
@@ -57,7 +210,7 @@ mouse_filter = 2
 theme = SubResource("Theme_prototype")
 script = ExtResource("1")
 starting_units = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5"), ExtResource("6")])
-encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_gatekeeper"), SubResource("Encounter_inner_streets"), SubResource("Encounter_inner_gatekeeper"), SubResource("Encounter_citadel_streets"), SubResource("Encounter_citadel_lord")])
+encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_aqueduct"), SubResource("Encounter_burial"), SubResource("Encounter_cistern"), SubResource("Encounter_market"), SubResource("Encounter_ossuary"), SubResource("Encounter_gatekeeper"), SubResource("Encounter_inner_streets"), SubResource("Encounter_roofs"), SubResource("Encounter_barracks"), SubResource("Encounter_molting"), SubResource("Encounter_aviary"), SubResource("Encounter_procession"), SubResource("Encounter_reliquary"), SubResource("Encounter_inner_gatekeeper"), SubResource("Encounter_spire"), SubResource("Encounter_underkeep"), SubResource("Encounter_rookery"), SubResource("Encounter_parade"), SubResource("Encounter_hatchery"), SubResource("Encounter_citadel_streets"), SubResource("Encounter_well"), SubResource("Encounter_citadel_lord")])
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1

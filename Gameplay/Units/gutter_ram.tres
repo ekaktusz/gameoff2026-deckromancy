@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitDefinition" format=3]
+
+[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/kek_kecske.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+title = "Gutter Ram"
+attack = 4
+hp = 10
+shift = 0
+faction = 3
+ability = 7
+portrait = ExtResource("2")
+portrait_tint = Color(0.80, 0.77, 0.67, 1)

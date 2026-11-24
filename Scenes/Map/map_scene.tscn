@@ -10,8 +10,10 @@ script = ExtResource("1")
 theme_override_font_sizes/font_size = 52
 text = "The city"
 
-[node name="Encounters" type="Label" parent="."]
-theme_override_constants/line_spacing = 12
+[node name="Graph" type="Control" parent="."]
+custom_minimum_size = Vector2(0, 272)
+layout_mode = 2
+mouse_filter = 2
 
 [node name="Army" type="Label" parent="."]
 theme_override_constants/line_spacing = 8

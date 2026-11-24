@@ -7,8 +7,26 @@ const MAX_RP := 5
 
 var army: Array[UnitState] = []
 var rp: int = STARTING_RP
-var encounter_index: int = 0
+var cleared_encounters: Array[EncounterDefinition] = []
 var defeated: bool = false
+
+
+static func route_successors(
+	encounter: EncounterDefinition, route: Array[EncounterDefinition]
+) -> Array[EncounterDefinition]:
+	var successors: Array[EncounterDefinition] = []
+	if encounter.map_stage > 0:
+		for candidate in route:
+			if (
+				candidate.map_stage == encounter.map_stage + 1
+				and encounter.next_lanes.has(candidate.map_lane)
+			):
+				successors.append(candidate)
+	else:
+		var index := route.find(encounter)
+		if index >= 0 and index + 1 < route.size():
+			successors.append(route[index + 1])
+	return successors
 
 
 func add_rp(amount: int) -> void:

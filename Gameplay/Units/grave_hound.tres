@@ -9,4 +9,6 @@ title = "Grave Hound"
 attack = 9
 hp = 5
 shift = 3
+faction = 3
+ability = 6
 portrait = ExtResource("2")

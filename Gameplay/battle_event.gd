@@ -1,9 +1,8 @@
 class_name BattleEvent
 extends RefCounted
-## One thing that happened while a round resolved, in play order, so the battle
-## screen can animate it. The battle state is already final when these arrive.
+## An action in the round, in the order the battle screen plays it.
 
-enum Kind { SHIFT, ATTACK, DEATH, RIP }
+enum Kind { SHIFT, ATTACK, DEATH, RIP, BONUS }
 enum Side { ALLY, ENEMY }
 
 ## A Kind value. Stored as int: Godot does not match the enum's inner name `Side`
@@ -17,10 +16,14 @@ var unit: UnitState
 var target: UnitState
 ## SHIFT: the column the unit left. Otherwise: the column it happened in.
 var column: int
-## SHIFT only: the column the unit moved to.
+## SHIFT: destination. ATTACK: target column, which can differ in a cross-lane duel.
 var to_column: int
-## ATTACK: damage dealt. RIP: RiP gained (positive) or lost (negative).
+## SHIFT only: this move traded places with a neighbour.
+var swapped: bool = false
+## ATTACK: damage. RIP: requested change. BONUS: the new temporary stat bonus.
 var amount: int
+## RIP only: the first attack on an empty enemy slot uses up its reward.
+var rewards_column: bool = false
 
 
 func _init(

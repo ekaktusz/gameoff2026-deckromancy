@@ -5,11 +5,14 @@ extends Node2D
 ## tweens so the battle screen can chain or await them.
 
 signal clicked
+signal dragged(point: Vector2)
+signal dropped(point: Vector2)
+signal drag_cancelled
 
 enum Look { ALLY, ENEMY, DEAD }
 
 const SIZE := Vector2(220, 300)
-const ART_RECT := Rect2(-100, -112, 200, 170)
+const ART_RECT := Rect2(-100, -112, 200, 160)
 const ATTACK_BADGE := Vector2(-82, 122)
 const HP_BADGE := Vector2(82, 122)
 const BADGE_RADIUS := 26.0
@@ -26,14 +29,25 @@ const DIMMED := Color(0.5, 0.5, 0.5)
 const HIT_FLASH := Color(1.7, 0.5, 0.45)
 const HOVER_SFX := preload("res://assets/sfx/hover.tres")
 const SELECT_SFX := preload("res://assets/sfx/select.wav")
+const DRAG_THRESHOLD := 10.0
+const HOVER_Z := 5
+const DRAG_Z := 30
 
 var unit: UnitState
 var look: Look = Look.ALLY
-## Whether clicks emit `clicked`. Enemy cards and busy screens turn it off.
+## Whether clicks emit `clicked`.
 var clickable: bool = false:
 	set(value):
 		clickable = value
+		if not value:
+			_cancel_pointer()
 		queue_redraw()
+var draggable: bool = false
+var hover_enabled: bool = true:
+	set(value):
+		hover_enabled = value
+		if not value:
+			_set_hovered(false, true)
 ## Greys the card out, e.g. a graveyard card you cannot afford to raise.
 var dimmed: bool = false:
 	set(value):
@@ -50,13 +64,20 @@ var base_scale: Vector2 = Vector2.ONE:
 		scale = value
 
 var _marks: int = 0
-var _shown_hp: int = 0
 var _hovered: bool = false
+var _hover_tween: Tween
+var _pop_tween: Tween
+var _pressed: bool = false
+var _dragging: bool = false
+var _press_position: Vector2
+var _drag_origin: Vector2
 var _body_style := StyleBoxFlat.new()
 
 @onready var _portrait: Sprite2D = $Portrait
+@onready var _marks_layer: Node2D = $Marks
 @onready var _name: Label = $Name
 @onready var _shift: Label = $Shift
+@onready var _ability: Label = $Ability
 @onready var _attack: Label = $Attack
 @onready var _hp: Label = $HP
 
@@ -67,6 +88,7 @@ func _ready() -> void:
 	_body_style.shadow_color = Color(0, 0, 0, 0.45)
 	_body_style.shadow_size = 8
 	_body_style.shadow_offset = Vector2(0, 4)
+	_marks_layer.draw.connect(_draw_marks)
 
 
 ## Shows a unit. With `for_revival` it previews the unit as it would come back
@@ -75,18 +97,18 @@ func _ready() -> void:
 func display(unit_state: UnitState, card_look: Look, for_revival: bool = false) -> void:
 	unit = unit_state
 	look = card_look
-	var stats := Vector2i(unit.attack, unit.hp)
+	var stats := Vector2i(unit.combat_attack(), unit.combat_hp())
 	var direction := unit.shift_direction
 	if for_revival:
 		stats = unit.revival_stats()
 		direction = unit.definition.starting_shift_direction()
 	_marks = unit.revivals + int(for_revival)
-	_shown_hp = stats.y
-
 	_name.text = unit.title(for_revival)
 	_shift.text = unit.shift_label(direction)
+	_ability.text = unit.definition.ability_text()
 	_attack.text = str(stats.x)
 	_hp.text = str(stats.y)
+	_marks_layer.queue_redraw()
 	_update_portrait()
 	queue_redraw()
 
@@ -124,34 +146,114 @@ func _draw() -> void:
 
 	draw_circle(ATTACK_BADGE, BADGE_RADIUS, Color(0.78, 0.6, 0.18))
 	draw_circle(HP_BADGE, BADGE_RADIUS, Color(0.72, 0.18, 0.18))
+
+
+func _draw_marks() -> void:
 	for mark in mini(_marks, 4):
-		var pip := ART_RECT.position + Vector2(12 + mark * 18, 12)
-		draw_circle(pip, 7, Color(0.1, 0.1, 0.1))
-		draw_circle(pip, 5, Color(0.55, 0.92, 0.3))
+		var pip := ART_RECT.position + Vector2(14, 14 + mark * 19)
+		_marks_layer.draw_circle(pip, 8, Color(0.1, 0.1, 0.1))
+		_marks_layer.draw_circle(pip, 5.5, Color(0.65, 1.0, 0.36))
+
+
+func _process(_delta: float) -> void:
+	if _pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_cancel_pointer()
+	if not _pressed:
+		_set_hovered(
+			hover_enabled and is_visible_in_tree() and _contains_point(get_global_mouse_position())
+		)
+
+
+func _set_hovered(value: bool, immediate: bool = false) -> void:
+	if _hovered == value and not (immediate and _hover_tween != null and _hover_tween.is_running()):
+		return
+	_hovered = value
+	if _hover_tween != null:
+		_hover_tween.kill()
+	var enlarged := 1.38 if look == Look.DEAD else 1.14
+	var target_scale := base_scale * enlarged if value else base_scale
+	if value:
+		if _pop_tween != null and _pop_tween.is_running():
+			_pop_tween.kill()
+		z_index = HOVER_Z
+		if clickable:
+			SoundManager.play_sfx(HOVER_SFX)
+	elif z_index == HOVER_Z:
+		z_index = 0
+	if immediate:
+		scale = target_scale
+	else:
+		_hover_tween = create_tween()
+		_hover_tween.tween_property(self, "scale", target_scale, 0.12)
+	queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+	var button := event as InputEventMouseButton
+	if (
+		button == null
+		or button.button_index != MOUSE_BUTTON_LEFT
+		or not button.pressed
+		or not clickable
+		or not is_visible_in_tree()
+	):
 		return
-	if event is InputEventMouseMotion:
-		var inside := _contains_mouse()
-		if inside != _hovered:
-			_hovered = inside
-			queue_redraw()
-			if inside and clickable:
-				SoundManager.play_sfx(HOVER_SFX)
+	var point := get_canvas_transform().affine_inverse() * button.position
+	if not _contains_point(point):
+		return
+	get_viewport().set_input_as_handled()
+	_pressed = true
+	_press_position = point
+	_drag_origin = global_position
+
+
+func _input(event: InputEvent) -> void:
+	var mouse := event as InputEventMouse
+	if not _pressed or mouse == null:
+		return
+	var point := get_canvas_transform().affine_inverse() * mouse.position
+	if event is InputEventMouseMotion and draggable:
+		if not _dragging and point.distance_to(_press_position) >= DRAG_THRESHOLD:
+			_dragging = true
+			_set_hovered(false, true)
+			z_index = DRAG_Z
+			SoundManager.play_sfx(SELECT_SFX)
+		if _dragging:
+			get_viewport().set_input_as_handled()
+			global_position = _drag_origin + point - _press_position
+			dragged.emit(point)
 		return
 	var button := event as InputEventMouseButton
-	if button == null or not clickable or not button.pressed:
+	if button == null or button.button_index != MOUSE_BUTTON_LEFT or button.pressed:
 		return
-	if button.button_index == MOUSE_BUTTON_LEFT and _contains_mouse():
-		get_viewport().set_input_as_handled()
+	get_viewport().set_input_as_handled()
+	_pressed = false
+	if _dragging:
+		_dragging = false
+		z_index = 0
+		global_position = _drag_origin + point - _press_position
+		dropped.emit(point)
+	elif _contains_point(point):
 		SoundManager.play_sfx(SELECT_SFX)
 		clicked.emit()
 
 
-func _contains_mouse() -> bool:
-	return Rect2(-SIZE / 2, SIZE).has_point(get_local_mouse_position())
+func restore_drag_position() -> void:
+	global_position = _drag_origin
+
+
+func _cancel_pointer() -> void:
+	_pressed = false
+	if _dragging:
+		_dragging = false
+		z_index = 0
+		restore_drag_position()
+		drag_cancelled.emit()
+
+
+func _contains_point(global_point: Vector2) -> bool:
+	var point := to_local(global_point) * scale / base_scale
+	return Rect2(-SIZE / 2, SIZE).has_point(point)
 
 
 func _rest_modulate() -> Color:
@@ -175,11 +277,12 @@ func move_to(target: Vector2, duration: float, arc: float = 0.0) -> Tween:
 ## furthest point, which is where the hit should land.
 func lunge(point: Vector2, duration: float, on_impact: Callable) -> Tween:
 	var home := global_position
+	var impact := Vector2(move_toward(point.x, home.x, SIZE.x * 0.45), lerpf(home.y, point.y, 0.38))
 	z_index = 10
 	var tween := create_tween()
 	(
 		tween
-		. tween_property(self, "global_position", home.lerp(point, 0.38), duration * 0.45)
+		. tween_property(self, "global_position", impact, duration * 0.45)
 		. set_trans(Tween.TRANS_BACK)
 		. set_ease(Tween.EASE_IN)
 	)
@@ -195,9 +298,8 @@ func lunge(point: Vector2, duration: float, on_impact: Callable) -> Tween:
 
 
 ## Takes a hit: the HP badge counts down, the card flashes red and shakes.
-func hit(damage: int, duration: float) -> Tween:
-	_shown_hp = maxi(0, _shown_hp - damage)
-	_hp.text = str(_shown_hp)
+func hit(remaining_hp: int, duration: float) -> Tween:
+	_hp.text = str(remaining_hp)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate", HIT_FLASH, duration * 0.2)
 	tween.parallel().tween_property(self, "rotation", 0.09, duration * 0.2)
@@ -219,8 +321,11 @@ func die(duration: float) -> Tween:
 ## Pops in from slightly larger, for cards that just appeared.
 func pop(duration: float = 0.3) -> Tween:
 	scale = base_scale * 1.25
-	var tween := create_tween()
-	tween.tween_property(self, "scale", base_scale, duration).set_trans(Tween.TRANS_BACK).set_ease(
-		Tween.EASE_OUT
+	_pop_tween = create_tween()
+	(
+		_pop_tween
+		. tween_property(self, "scale", base_scale, duration)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
 	)
-	return tween
+	return _pop_tween
