@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UnitDefinition" format=3]
+
+[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/armored_crow_ai_placeholder.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+title = "Ash Crow"
+attack = 6
+hp = 8
+shift = 1
+faction = 2
+ability = 0
+portrait = ExtResource("2")

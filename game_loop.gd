@@ -41,21 +41,31 @@ func _on_starting_raise_requested(unit: UnitState, graveyard: GraveyardView) -> 
 func _show_map() -> void:
 	var map_view := MAP.instantiate() as MapView
 	_show_screen(map_view)
-	map_view.display(_run, encounters)
+	map_view.display(_run, encounters, _available_encounters())
 	map_view.fight_requested.connect(_start_battle)
 	map_view.retry_requested.connect(_start_run)
 
 
-func _start_battle() -> void:
+func _available_encounters() -> Array[EncounterDefinition]:
+	if _run.defeated or encounters.is_empty():
+		return []
+	if _run.cleared_encounters.is_empty():
+		return [encounters[0]]
+	return DeckRun.route_successors(_run.cleared_encounters.back(), encounters)
+
+
+func _start_battle(encounter: EncounterDefinition) -> void:
+	if not _available_encounters().has(encounter):
+		return
 	var battle_view := BATTLE.instantiate() as BattleView
 	_show_screen(battle_view)
-	battle_view.display(BattleState.new(_run, encounters[_run.encounter_index]))
-	battle_view.finished.connect(_on_battle_finished)
+	battle_view.display(BattleState.new(_run, encounter))
+	battle_view.finished.connect(_on_battle_finished.bind(encounter))
 
 
-func _on_battle_finished(won: bool) -> void:
+func _on_battle_finished(won: bool, encounter: EncounterDefinition) -> void:
 	if won:
-		_run.encounter_index += 1
+		_run.cleared_encounters.append(encounter)
 	else:
 		_run.defeated = true
 	_show_map()

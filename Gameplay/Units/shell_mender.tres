@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitDefinition" format=3]
+
+[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/scorpion.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+title = "Shell Mender"
+attack = 4
+hp = 8
+shift = 0
+faction = 1
+ability = 2
+portrait = ExtResource("2")
+portrait_tint = Color(0.76, 0.92, 0.69, 1)

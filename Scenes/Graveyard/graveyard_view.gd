@@ -6,6 +6,9 @@ extends Node2D
 ## at a smaller scale with the background hidden.
 
 signal raise_requested(unit: UnitState)
+signal unit_dragged(unit: UnitState, point: Vector2)
+signal unit_dropped(unit: UnitState, point: Vector2)
+signal drag_cancelled
 signal continue_requested
 
 const CARD_SCENE := preload("res://Scenes/Card/card_2d.tscn")
@@ -21,6 +24,7 @@ const MOVE_TIME := 0.35
 ## Local centre of the first army card (starting graveyard only).
 @export var army_origin: Vector2 = Vector2(166, 744)
 
+var interactions_enabled: bool = true
 var _cards: Dictionary = {}
 
 @onready var _background: Sprite2D = $Background
@@ -46,8 +50,12 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 	)
 	if dead.is_empty():
 		_status.text += "\nNo creatures to raise"
-	elif run.can_raise():
-		_status.text += "\nClick a card to raise it for 1 RiP"
+	elif interactions_enabled and run.can_raise():
+		_status.text += (
+			"\nClick a card to raise it for 1 RiP"
+			if is_starting_yard
+			else "\nClick or drag to an empty slot to raise for 1 RiP"
+		)
 
 	_army_label.visible = is_starting_yard
 	_continue_button.visible = is_starting_yard
@@ -62,7 +70,9 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 
 	for unit: UnitState in _cards.keys():
 		if not targets.has(unit):
-			(_cards[unit] as Card2D).queue_free()
+			var card: Card2D = _cards[unit]
+			card.hide()
+			card.queue_free()
 			_cards.erase(unit)
 
 	for unit: UnitState in targets:
@@ -75,12 +85,17 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 			card.base_scale = Vector2.ONE * card_scale
 			card.global_position = target
 			card.clicked.connect(_on_card_clicked.bind(unit))
+			card.dragged.connect(func(point: Vector2) -> void: unit_dragged.emit(unit, point))
+			card.dropped.connect(func(point: Vector2) -> void: unit_dropped.emit(unit, point))
+			card.drag_cancelled.connect(drag_cancelled.emit)
 			_cards[unit] = card
 			card.pop()
 		elif not card.global_position.is_equal_approx(target):
 			card.move_to(target, MOVE_TIME)
 		card.display(unit, Card2D.Look.DEAD if for_revival else Card2D.Look.ALLY, for_revival)
-		card.clickable = for_revival and run.can_raise()
+		card.clickable = for_revival and interactions_enabled and run.can_raise()
+		card.draggable = card.clickable and not is_starting_yard
+		card.hover_enabled = interactions_enabled
 		card.dimmed = for_revival and not run.can_raise()
 
 
@@ -88,6 +103,12 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 func card_global_position(unit: UnitState) -> Vector2:
 	var card: Card2D = _cards.get(unit)
 	return card.global_position if card != null else global_position
+
+
+func restore_drag_position(unit: UnitState) -> void:
+	var card: Card2D = _cards.get(unit)
+	if card != null:
+		card.restore_drag_position()
 
 
 func _cell(index: int) -> Vector2:

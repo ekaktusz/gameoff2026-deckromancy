@@ -3,12 +3,14 @@
 ## Play the prototype
 
 Open the project in Godot and press **F5**, then choose **Start**. Raise at least
-one creature, enter the city, and fight through six encounters: the lower
-streets, the gatekeeper, the inner city streets, the inner gatekeeper, the
-citadel streets, and the citadel lord. Before each fight, click two slots in
-your row to swap them. Use the graveyard between rounds and after the last
-enemy falls. Open `game_loop.tscn` and press **F6** to start at the graveyard
-while iterating.
+one creature, then choose your path through the city's twelve encounter stages.
+The routes rejoin at the Gatekeeper, Inner Gatekeeper and Citadel Lord. Before
+each fight, drag cards to rearrange them or click two slots to swap them.
+Between rounds and after the last enemy falls, click a graveyard card to raise
+it in the first free slot or drag it to a specific vacancy. To sacrifice an
+ally, select it between rounds and press **Sacrifice**. It goes to the
+graveyard and earns no RiP. Open `game_loop.tscn` and press **F6** to start at
+the graveyard while iterating.
 
 ## Where to work
 
@@ -25,21 +27,22 @@ while iterating.
 
 Edit **Starting Units** and **Encounters** on the GameLoop node in the inspector
 to change the prototype content. Each encounter supports up to five enemies.
+Use **Map Stage**, **Map Lane** and **Next Lanes** to place and connect encounters.
 
 The graveyard and battle screens are Node2D scenes. Each unit's **Art** group
 sets its `portrait`, an optional `marked_portrait` shown once it carries a MARK
 (otherwise the portrait is tinted), and a `portrait_tint`. Slot positions are
 the `Slot0`–`Slot4` markers under `EnemySlots` and `AllySlots` in
 `battle_ground.tscn`. `ANIM_SPEED` in `battle_view.gd` scales every battle
-animation. The battle logic returns a list of `BattleEvent`s per round, which the
-battle screen plays back in order.
+animation. The battle screen plays shifts, faction abilities and attacks in
+order. Damage applies on impact.
 
 Resurrection Points are called RiP in game. The prototype uses 3 starting RiP,
 holds at most 5 (extra gains are lost), and awards 1 RiP for an unmarked enemy
 kill. An ally attacking an empty enemy slot gains 1 RiP, but each slot pays
 out only once per battle; an enemy attacking an empty ally slot costs 1 RiP
 every time (never below 0).
-Defenders always retaliate, even when the attack kills them. Raised units take the first vacant slot.
+Defenders always retaliate, even when the attack kills them.
 Revival percentages use the unit's base stats, rounded to the nearest whole
 number with a minimum of 1. A player with an empty army can still raise a
 creature before choosing to end the run. HP and unspent RiP carry into the next
@@ -54,8 +57,12 @@ Bounce units facing each other) swap places instead. Left movers resolve
 from the left and right movers from the right, so a line heading the same way
 moves together. Left and Right units stop at the edge; Bounce units start
 heading right and turn around at the edge. If no column has units on both
-sides after shifting, the first ally moves into the first enemy's column so
-the fight cannot stall. These rules are provisional while the team tunes them.
+sides after shifting, the closest opposing pair trades blows across lanes.
+Enemies start in the middle lanes of the board.
+
+Bug, Bird and Mammal cards show their faction and any special ability. Abilities
+resolve before attacks, after any shifts. Bonus HP absorbs damage first. Temporary
+ATK and remaining bonus HP expire at the end of the encounter.
 
 ## Web export and itch.io deployment
 

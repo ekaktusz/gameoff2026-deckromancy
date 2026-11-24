@@ -118,5 +118,21 @@ theme_override_font_sizes/font_size = 26
 disabled = true
 text = "Resolve round"
 
+[node name="Sacrifice" type="Button" parent="HUD"]
+visible = false
+layout_mode = 0
+offset_left = 368.0
+offset_top = 936.0
+offset_right = 660.0
+offset_bottom = 1000.0
+tooltip_text = "Select an ally to sacrifice it into the graveyard."
+theme_override_font_sizes/font_size = 26
+disabled = true
+text = "Sacrifice ally"
+
 [connection signal="pressed" from="HUD/Action" to="." method="_on_action_pressed"]
+[connection signal="pressed" from="HUD/Sacrifice" to="." method="_on_sacrifice_pressed"]
 [connection signal="raise_requested" from="Graveyard" to="." method="_on_raise_requested"]
+[connection signal="unit_dragged" from="Graveyard" to="." method="_on_graveyard_dragged"]
+[connection signal="unit_dropped" from="Graveyard" to="." method="_on_graveyard_dropped"]
+[connection signal="drag_cancelled" from="Graveyard" to="." method="_clear_drop_target"]

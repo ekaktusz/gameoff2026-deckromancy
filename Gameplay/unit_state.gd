@@ -5,6 +5,8 @@ var definition: UnitDefinition
 var attack: int
 var hp: int
 var revivals: int = 0
+var battle_bonus: int = 0
+var bonus_hp: int = 0
 ## -1 moves left, 1 moves right, 0 holds. Bounce units flip it at the row's edge.
 var shift_direction: int = 0
 
@@ -40,6 +42,26 @@ func revive() -> void:
 	hp = stats.y
 	revivals += 1
 	shift_direction = definition.starting_shift_direction()
+	set_battle_bonus(0)
+
+
+func combat_attack() -> int:
+	return attack + battle_bonus
+
+
+func combat_hp() -> int:
+	return hp + bonus_hp
+
+
+func set_battle_bonus(amount: int) -> void:
+	bonus_hp = clampi(bonus_hp + amount - battle_bonus, 0, amount)
+	battle_bonus = amount
+
+
+func take_damage(amount: int) -> void:
+	var absorbed := mini(bonus_hp, amount)
+	bonus_hp -= absorbed
+	hp = maxi(0, hp - (amount - absorbed))
 
 
 func shift_label(direction: int) -> String:
