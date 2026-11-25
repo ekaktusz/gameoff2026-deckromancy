@@ -9,4 +9,5 @@ extends Resource
 @export_range(-1, 1) var map_lane: int = 0
 @export var is_boss: bool = false
 ## Lanes on the next stage that can be reached after clearing this encounter.
-@export var next_lanes: PackedInt32Array = []
+## Keep this as an Array[int] so the links survive the Web export.
+@export var next_lanes: Array[int] = []

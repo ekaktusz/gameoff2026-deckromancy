@@ -29,7 +29,11 @@ func _init(deck_run: DeckRun, battle_encounter: EncounterDefinition) -> void:
 
 
 func enemies_defeated() -> bool:
-	return enemies.count(null) == COLUMN_COUNT
+	return enemies_remaining() == 0
+
+
+func enemies_remaining() -> int:
+	return enemies.size() - enemies.count(null)
 
 
 func swap_allies(first: int, second: int) -> void:

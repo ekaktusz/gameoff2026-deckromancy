@@ -67,6 +67,14 @@ jobs:
             exit 1
           fi
           for ext in html js wasm pck; do test -s "build/web/index.$ext"; done
+      - name: Verify routes in the exported game
+        shell: bash
+        run: |
+          "$HOME/.local/bin/deckromancy-godot" --headless --quit-after 300 \
+            --path "$GITHUB_WORKSPACE/build/web" \
+            --main-pack "$GITHUB_WORKSPACE/build/web/index.pck" \
+            --script "$GITHUB_WORKSPACE/.github/scripts/check_exported_routes.gd" |
+            grep -E '^Verified all [0-9]+ exported city encounters$'
       - name: Save Web build
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
