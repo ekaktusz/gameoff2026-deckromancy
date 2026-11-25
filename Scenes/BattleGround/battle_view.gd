@@ -329,10 +329,15 @@ func _on_action_pressed() -> void:
 	await _play(_battle.plan_bonuses(shifts))
 	await _play(_battle.plan_attacks())
 
+	var enemies_left := _battle.enemies_remaining()
+	var enemy_status := "No enemies left"
+	if enemies_left > 0:
+		enemy_status = tr_n("%d enemy left", "%d enemies left", enemies_left) % enemies_left
 	_status.text = (
-		"Round %d  ·  %d shifted  ·  %d fallen  ·  %+d RiP"
+		"Round %d  ·  %s  ·  %d shifted  ·  %d fallen  ·  %+d RiP"
 		% [
 			_battle.round_number,
+			enemy_status,
 			_battle.last_shift_count,
 			_battle.graveyard.size() - previous_dead,
 			_battle.run.rp - previous_rp,
