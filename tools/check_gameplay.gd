@@ -15,7 +15,7 @@ func _check_gameplay() -> void:
 	_check_abilities()
 	_check_deaths()
 	var game_scene := load("res://game_loop.tscn") as PackedScene
-	_check_map_backgrounds(game_scene)
+	await _check_map_backgrounds(game_scene)
 	var game = game_scene.instantiate()
 	var route: Array[EncounterDefinition] = game.encounters
 	_check_encounter_lineups(route, game.enemy_pool)
@@ -28,6 +28,7 @@ func _check_gameplay() -> void:
 	enemy.faction = UnitDefinition.Faction.BUG
 	var encounter := EncounterDefinition.new()
 	encounter.title = "Regression fight"
+	encounter.is_boss = true
 	encounter.enemies.assign([enemy, enemy])
 	encounter.portrait_gradient = GradientTexture1D.new()
 	encounter.portrait_gradient.gradient = Gradient.new()
@@ -43,11 +44,20 @@ func _check_gameplay() -> void:
 	game.encounters.assign([encounter, next_encounter])
 	var rook := load("res://Gameplay/Units/rook_captain.tres") as UnitDefinition
 	var hound := load("res://Gameplay/Units/grave_hound.tres") as UnitDefinition
-	game.starting_units.assign([hound, rook])
+	var guard := load("res://Gameplay/Units/silt_guard.tres") as UnitDefinition
+	var spare := load("res://Gameplay/Units/bone_ward.tres") as UnitDefinition
+	game.enemy_pool.assign([hound, rook, guard, spare])
 	root.add_child(game)
 	root.get_node("MusicPlayer/AudioStreamPlayer").stop()
+	await process_frame
+	_dismiss_story(game)
+	_dismiss_story(game)
 	var yard = game.get_node("World/GraveyardScene")
-	var starters: Array[UnitState] = game.get("_starting_graveyard").duplicate()
+	var offer: Dictionary[UnitDefinition, UnitState] = {}
+	for unit: UnitState in game.get("_starting_graveyard"):
+		offer[unit.definition] = unit
+	var starters: Array[UnitState] = [offer[hound], offer[rook]]
+	var continue_button := yard.get_node("Continue") as Button
 	var first_card: Vector2 = yard.card_global_position(starters[0])
 	var run: DeckRun = game.get("_run")
 	_pointer(first_card, first_card)
@@ -64,19 +74,59 @@ func _check_gameplay() -> void:
 	_pointer(army_slots.slot_position(0), army_slots.slot_position(3))
 	_pointer(army_slots.slot_position(3), army_slots.slot_position(1))
 	_expect(run.rp == 1, "Rearranging starting slots must not spend RiP")
-	var guard := load("res://Gameplay/Units/silt_guard.tres") as UnitDefinition
-	run.army.append(UnitState.new(guard))
-	yard.continue_requested.emit()
+	_expect(continue_button.disabled, "Two starters cannot enter the city")
+	_pointer(yard.card_global_position(offer[guard]), army_slots.slot_position(2))
+	_expect(not continue_button.disabled, "Three starters can enter the city")
+	_pointer(yard.card_global_position(offer[spare]), army_slots.slot_position(4))
+	_expect(run.army.size() == 3 and not run.army.has(offer[spare]), "Pick only three starters")
+	_expect(run.rp == 0, "Each starting card costs one RiP")
+	# Give the combat fixture enough RiP to exercise three more revivals.
+	run.add_rp(1)
+	continue_button.pressed.emit()
 	var map := game.get_node("Screen/MapScene") as Control
 	_expect(map.get_node("ArmyCards").get_child_count() == 3, "Map must show the army's cards")
 	_expect(not map.get_node("Retry").visible, "There should be no extra start button")
 	var button := map.get_node("Graph").get_child(0) as Button
 	_expect(button.tooltip_text == "2× Bug", "Map preview must show enemy types and counts")
+	var preview := button.call("_make_custom_tooltip", button.tooltip_text) as Label
+	_expect(preview.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "Center enemy types")
+	preview.free()
 	button.pressed.emit()
 	_expect(not game.get_node("MapBackground").visible, "Map background must hide in battle")
+	_expect(_story_text(game).begins_with("Every creature"), "Show the first fight tutorial")
 	var battle_view: Node = game.get_node("World/BattleGround")
 	var battle: BattleState = battle_view.get("_battle")
 	var action := battle_view.get_node("HUD/Action") as Button
+	var yard_title := battle_view.get_node("Graveyard/Title") as Label
+	var yard_status := battle_view.get_node("Graveyard/Status") as Label
+	_expect(yard_title.is_visible_in_tree(), "Show the graveyard heading before the first round")
+	_expect(
+		yard_status.is_visible_in_tree() and yard_status.text.contains("No creatures to raise"),
+		"Show the empty graveyard status before the first round"
+	)
+	var battle_art := battle_view.get_node("Background") as Sprite2D
+	var battle_texture := load("res://assets/backgrounds/battle_bg.png") as Texture2D
+	_expect(battle_art.texture == battle_texture, "First fight uses the dedicated battle background")
+	var battle_tint := battle_art.self_modulate
+	_expect(battle_tint != Color.WHITE, "Keep the battle background dimmed")
+	_expect(not battle_view.can_process(), "Block battle input during the tutorial")
+	await process_frame
+	var tutorial_panel := game.get_node("StoryBox/Margin/Panel") as Control
+	var panel_center := tutorial_panel.get_global_rect().get_center()
+	var screen_center := root.get_visible_rect().get_center()
+	_expect(
+		panel_center.distance_to(screen_center) <= 1.0,
+		"Center the battle tutorial (%s vs %s)" % [panel_center, screen_center]
+	)
+	var action_point := action.get_global_rect().get_center()
+	_pointer(action_point, action_point)
+	_expect(
+		battle.round_number == 0 and game.get_node("StoryBox").visible,
+		"A click behind the tutorial cannot start combat or dismiss the story"
+	)
+	_dismiss_story(game)
+	_expect(battle_view.can_process(), "Restore battle input after dismissing")
+	_expect(battle_art.self_modulate == battle_tint, "Keep the same battle tint after dismissing")
 	var recruit := battle.enemies[1]
 	var cards: Dictionary = battle_view.get("_cards")
 	var enemy_ability := cards[battle.enemies[2]].get_node("Ability") as Label
@@ -125,26 +175,28 @@ func _check_gameplay() -> void:
 	await _check_battle_yard(battle_view, battle, action, fallen, starters[1])
 	await _check_next_battle(game, battle_view, recruit)
 	if not _failed:
-		print("Verified map backgrounds, MARK layers, faction abilities, and round playback")
+		print("Verified story scenes, map backgrounds, MARK layers, abilities, and round playback")
 	await create_timer(0.5, true, false, true).timeout
 	quit(int(_failed))
 
 
 func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 	var yard = view.get_node("Graveyard")
+	_expect(not yard.get_node("Background/Plants").is_visible_in_tree(), "Hide plants in battle")
 	var yard_cards: Dictionary = yard.get("_cards")
 	_expect(_card_gradient(yard_cards[recruit]) == recruit.portrait_gradient, "Enemy keeps its art")
 	var slots = view.get_node("AllySlots")
 	var action := view.get_node("HUD/Action") as Button
 	_pointer(yard.card_global_position(recruit), slots.slot_position(3))
 	await _wait_for_action(action)
-	var before := (view.get_node("Background") as Sprite2D).position
 	action.pressed.emit()
+	_dismiss_story(game)
 	var previews := game.get_node("Screen/MapScene/ArmyCards")
 	var preview := previews.get_child(previews.get_child_count() - 1).get_child(0)
 	_expect(_card_gradient(preview) == recruit.portrait_gradient, "Map shows the recruited palette")
 	_check_stat_color(preview, Color.GOLD)
 	game.get_node("Screen/MapScene/Graph").get_child(1).pressed.emit()
+	_expect(not game.get_node("StoryBox").visible, "Tutorial appears only in the first fight")
 	var next_view := game.get_node("World/BattleGround") as Node2D
 	var battle: BattleState = next_view.get("_battle")
 	var cards: Dictionary = next_view.get("_cards")
@@ -158,11 +210,12 @@ func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 	_check_stat_color(cards[recruit], Color.GOLD)
 	_check_stat_color(cards[battle.enemies[2]], Color.AQUAMARINE)
 	var background := next_view.get_node("Background") as Sprite2D
+	var battle_texture := load("res://assets/backgrounds/battle_bg.png") as Texture2D
+	_expect(background.texture == battle_texture, "Later fights use the dedicated battle background")
 	var viewport := next_view.get_viewport_rect()
-	_expect(background.position.x < before.x and background.position.y > before.y, "City crop pans")
-	_expect(
-		(background.transform * background.get_rect()).encloses(viewport), "City fills the view"
-	)
+	var art_rect := background.transform * background.get_rect()
+	_expect(viewport.encloses(art_rect), "Show the entire battle background")
+	_expect(art_rect.get_center().is_equal_approx(viewport.get_center()), "Center the battle art")
 	await _wait_for_action(next_view.get_node("HUD/Action") as Button)
 
 
@@ -185,22 +238,91 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	var game = scene.instantiate()
 	root.add_child(game)
 	root.get_node("MusicPlayer/AudioStreamPlayer").stop()
+	await process_frame
 	var background := game.get_node("MapBackground") as TextureRect
-	_expect(not background.visible, "City background must be hidden in the starting graveyard")
-	game.get_node("World/GraveyardScene").continue_requested.emit()
 	var city_start := load("res://assets/backgrounds/city_00.png") as Texture2D
+	_expect(background.visible and background.texture == city_start, "Intro must show city 00")
+	_expect(background.self_modulate == Color.WHITE, "Show the intro at full brightness")
+	var intro := _story_text(game)
+	_expect(intro.begins_with("This City"), "Show intro after Start")
+	var copy := game.get_node("StoryBox/Margin/Panel/Content/Copy") as RichTextLabel
+	_expect(copy.size.y >= copy.get_content_height(), "Fit the full intro into the story box")
+	var panel := game.get_node("StoryBox/Margin/Panel") as Control
+	_expect(panel.position == Vector2(40, 32), "Story box belongs at the top left")
+	var mark_color := Color(0.65, 1.0, 0.36).to_html(false)
+	_expect(copy.text.contains("[color=#%s]City[/color]" % mark_color), "Use the MARK green")
+	var centre := root.get_visible_rect().get_center()
+	_pointer(centre, centre)
+	_expect(_story_text(game) == intro, "A single click cannot dismiss story")
+	_dismiss_story(game)
+	_expect(_story_text(game).begins_with("I got some"), "Show the cemetery story next")
+	_expect(
+		_story_text(game).contains("RESURRECTION POINTS (RiP)"), "Show resurrection instructions"
+	)
+	_expect(not background.visible, "City background must be hidden in the starting graveyard")
+	var yard_art := game.get_node("World/GraveyardScene/Background") as Sprite2D
+	_expect(yard_art.self_modulate == Color.WHITE, "Show the cemetery story at full brightness")
+	var plants := yard_art.get_node("Plants") as Sprite2D
+	var graveyard := load("res://assets/backgrounds/temeto_00.png") as Texture2D
+	var plant_art := load("res://assets/backgrounds/temeto_00_noveny.png") as Texture2D
+	_expect(yard_art.is_visible_in_tree() and yard_art.texture == graveyard, "Show graveyard art")
+	_expect(plants.is_visible_in_tree() and plants.texture == plant_art, "Show the plant layer")
+	_expect(plants.get_rect() == yard_art.get_rect(), "Plant art aligns with the graveyard")
+	_expect(
+		(yard_art.global_transform * yard_art.get_rect()).encloses(yard_art.get_viewport_rect()),
+		"Graveyard art fills the view"
+	)
+	_expect(not game.get_node("World/GraveyardScene/Continue").visible, "Story comes before draft")
+	_dismiss_story(game)
+	_expect(yard_art.self_modulate != Color.WHITE, "Restore the normal cemetery background")
+	_expect(
+		game.get_node("World/GraveyardScene/Continue").visible, "Dismiss story to start drafting"
+	)
+	var offered_definitions: Array[UnitDefinition] = []
+	for unit: UnitState in game.get("_starting_graveyard"):
+		_expect(game.enemy_pool.has(unit.definition), "Starters come from the base unit pool")
+		_expect(not offered_definitions.has(unit.definition), "Starters must be distinct")
+		offered_definitions.append(unit.definition)
+	_expect(offered_definitions.size() == 4, "Offer four starters per run")
+	game._show_map()
 	_expect(background.visible and background.texture == city_start, "Map must begin with city 00")
+	_expect(background.self_modulate != Color.WHITE, "Restore the normal map background")
 	var stage := 0
+	var boss_openings := [
+		"I knew I was on", "I kept pushing", "I knew I was getting", "I was exhausted"
+	]
 	for encounter: EncounterDefinition in game.encounters:
 		stage += int(encounter.is_boss)
 		game._on_battle_finished(true, encounter)
 		var texture := load("res://assets/backgrounds/city_%02d.png" % stage) as Texture2D
 		_expect(background.texture == texture, "Wrong map background after %s" % encounter.title)
+		_expect(game.get_node("StoryBox").visible == encounter.is_boss, "Story follows each boss")
+		if encounter.is_boss:
+			_expect(background.self_modulate == Color.WHITE, "Show boss stories at full brightness")
+			_expect(_story_text(game).begins_with(boss_openings[stage - 1]), "Match boss story")
+			_expect(
+				not game.has_node("Screen/MapScene"), "Show victory art before returning to map"
+			)
+			_dismiss_story(game)
 	_expect(stage == 4, "Darius must unlock city 04")
 	game.get_node("Screen/MapScene").retry_requested.emit()
-	game.get_node("World/GraveyardScene").continue_requested.emit()
+	_dismiss_story(game)
+	game._show_map()
 	_expect(background.texture == city_start, "A new run must restore city 00")
+	root.remove_child(game)
 	game.queue_free()
+
+
+func _story_text(game: Node) -> String:
+	var copy := game.get_node("StoryBox/Margin/Panel/Content/Copy") as RichTextLabel
+	return copy.get_parsed_text()
+
+
+func _dismiss_story(game: Node) -> void:
+	var story := game.get_node("StoryBox") as Control
+	_expect(story.visible, "Expected a story to dismiss")
+	var centre := root.get_visible_rect().get_center()
+	_pointer(centre, centre, true)
 
 
 func _check_encounter_lineups(
@@ -268,11 +390,12 @@ func _check_battle_yard(
 	_expect(battle.allies[0] == ally and ally.marks == 3, "Sacrificed allies can be raised again")
 
 
-func _pointer(from: Vector2, to: Vector2) -> void:
+func _pointer(from: Vector2, to: Vector2, double_click: bool = false) -> void:
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.button_mask = MOUSE_BUTTON_MASK_LEFT
 	press.pressed = true
+	press.double_click = double_click
 	press.position = from
 	root.push_input(press, true)
 	if from != to:

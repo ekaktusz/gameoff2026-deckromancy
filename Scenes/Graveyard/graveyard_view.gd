@@ -33,31 +33,35 @@ var _cards: Dictionary = {}
 
 func _ready() -> void:
 	_background.visible = show_background
+	if show_background:
+		var title: Label = $Title
+		title.position = Vector2(1312, 838)
+		_status.position = Vector2(1362, 904)
+		_army_label.position = Vector2(1312, 754)
+		for label in [title, _status, _army_label]:
+			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 
 func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = false) -> void:
-	_status.text = (
-		"%d/%d RiP  ·  %d/%d creatures"
-		% [
-			run.rp,
-			DeckRun.MAX_RP,
-			run.army.size(),
-			DeckRun.MAX_UNITS,
-		]
-	)
-	if dead.is_empty():
-		_status.text += "\nNo creatures to raise"
-	elif interactions_enabled and run.can_raise():
-		_status.text += (
-			"\nDrag a card to an empty army slot for 1 RiP"
-			if is_starting_yard
-			else "\nDrag to an empty slot for 1 RiP"
+	if is_starting_yard:
+		_status.text = (
+			"%d/%d starting cards\nDrag cards into your army"
+			% [run.army.size(), DeckRun.STARTING_ARMY_SIZE]
 		)
+	else:
+		_status.text = (
+			"%d/%d RiP  ·  %d/%d creatures"
+			% [run.rp, DeckRun.MAX_RP, run.army.size(), DeckRun.MAX_UNITS]
+		)
+		if dead.is_empty():
+			_status.text += "\nNo creatures to raise"
+		elif interactions_enabled and run.can_raise():
+			_status.text += "\nDrag to an empty slot for 1 RiP"
 
 	_army_label.visible = is_starting_yard
 	_army_slots.visible = is_starting_yard
 	_continue_button.visible = is_starting_yard
-	_continue_button.disabled = run.army.is_empty()
+	_continue_button.disabled = run.army.size() != DeckRun.STARTING_ARMY_SIZE
 
 	var targets := {}
 	for index in dead.size():

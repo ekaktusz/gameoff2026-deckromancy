@@ -28,7 +28,8 @@ const DRAG_THRESHOLD := 10.0
 const NAME_FONT_SIZE := 17
 const NAME_MIN_FONT_SIZE := 13
 const HOVER_Z := 5
-const DRAG_Z := 30
+const DRAG_Z := 32
+const MARK_COLOR := Color(0.65, 1.0, 0.36)
 
 static var _opaque_bounds: Dictionary[Texture2D, Rect2] = {}
 
@@ -201,7 +202,7 @@ func _texture_bounds(texture: Texture2D) -> Rect2:
 func _draw_marks() -> void:
 	for mark in mini(_marks, UnitState.POOP_MARKS):
 		var pip := Vector2(77, -92 + mark * 29)
-		_marks_layer.draw_circle(pip, 5.0, Color(0.65, 1.0, 0.36))
+		_marks_layer.draw_circle(pip, 5.0, MARK_COLOR)
 
 
 func _process(_delta: float) -> void:

@@ -7,8 +7,8 @@
 [resource]
 script = ExtResource("1")
 title = "Darius"
-attack = 20
-hp = 40
+attack = 99
+hp = 99
 ability = 1
 portrait = ExtResource("2")
 mark_overlay = ExtResource("3")

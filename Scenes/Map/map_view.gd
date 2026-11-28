@@ -4,6 +4,16 @@ extends VBoxContainer
 signal fight_requested(encounter: EncounterDefinition)
 signal retry_requested
 
+
+class EncounterButton extends Button:
+	func _make_custom_tooltip(text: String) -> Object:
+		var preview := Label.new()
+		preview.theme_type_variation = &"TooltipLabel"
+		preview.text = text
+		preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		return preview
+
+
 const CARD_SCENE := preload("res://Scenes/Card/card_2d.tscn")
 const ACTIVE_PATH := Color(0.84, 0.66, 0.41)
 const FUTURE_PATH := Color(0.27, 0.24, 0.21)
@@ -49,7 +59,7 @@ func display(
 	for index in route.size():
 		var encounter := route[index]
 		_stage_count = maxi(_stage_count, _stage(encounter, index))
-		var button := Button.new()
+		var button := EncounterButton.new()
 		button.text = encounter.title
 		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.add_theme_font_size_override("font_size", 19 if encounter.is_boss else 17)
@@ -102,7 +112,7 @@ func _enemy_types(lineup: Array[UnitDefinition], is_boss: bool) -> String:
 	var summary := PackedStringArray()
 	for type in counts:
 		summary.append("%d× %s" % [counts[type], type])
-	return " · ".join(summary)
+	return "\n".join(summary)
 
 
 func _stage(encounter: EncounterDefinition, index: int) -> int:

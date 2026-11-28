@@ -2,6 +2,7 @@ class_name DeckRun
 extends RefCounted
 
 const MAX_UNITS := 5
+const STARTING_ARMY_SIZE := 3
 const STARTING_RP := 3
 const MAX_RP := 5
 

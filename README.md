@@ -2,9 +2,9 @@
 
 ## Play the prototype
 
-Open the project in Godot and press **F5**, then choose **Start**. Drag at least
-one graveyard card into a slot under **Your army**, then click a location to
-enter its fight. The chosen slots set the opening formation.
+Open the project in Godot and press **F5**, then choose **Start**. Drag three of
+the four random starting cards into slots under **Your army**, then click a
+location to enter its fight. The chosen slots set the opening formation.
 The city's thirteen stages end with Darius, beyond the Citadel Lord. Before each
 fight, drag cards to rearrange them.
 Between rounds and after the last enemy falls, drag a graveyard card into an
@@ -27,15 +27,16 @@ at the graveyard while iterating.
 | Card artwork, unit portraits, city backgrounds, UI font and music | `assets/cards/`, `assets/units/`, `assets/backgrounds/`, `assets/fonts/`, `assets/music/` |
 | Sound effects (generated: hit, empty hit, shift, hover, select, RiP gain/loss) | `assets/sfx/`, regenerate with `python3 tools/generate_hit_sfx.py` |
 
-Edit **Starting Units**, **Enemy Pool** and **Encounters** on the GameLoop node in
-the inspector. Each encounter supports up to five enemies. Set **Random Enemy
-Count** to draw that many units from the pool. The map previews their types and
+Edit **Enemy Pool** and **Encounters** on the GameLoop node in the inspector.
+The pool also supplies the random starting cards. Each encounter supports up to
+five enemies. Set **Random Enemy Count** to draw that many units from the pool.
+The map previews their types and
 counts, and the fight uses the same draw. Set the count to zero to use the fixed
 **Enemies** list. Use **Map Stage**, **Map Lane**
 and **Next Lanes** to place and connect encounters.
 **Portrait Gradient** colors enemies when they spawn. Recruited units carry
-their palette into later fights. The battle background pans toward the keep as
-the route progresses.
+their palette into later fights. The battle background fits the view at its
+original aspect ratio.
 
 The graveyard and battle screens are Node2D scenes. Each unit's **Art** group
 sets its `portrait` and `portrait_tint`. A same-size `mark_overlay` is drawn over
