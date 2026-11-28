@@ -23,12 +23,6 @@
 [sub_resource type="Theme" id="Theme_prototype"]
 default_font_size = 26
 
-[sub_resource type="Resource" id="Unit_test_99"]
-script = ExtResource("2")
-title = "Test Unit"
-attack = 99
-hp = 99
-
 [sub_resource type="Gradient" id="Gradient_streets"]
 offsets = PackedFloat32Array(0, 0.5, 1)
 colors = PackedColorArray(0.2212, 0.1162, 0.0596, 1.0000, 0.6753, 0.4102, 0.2208, 1.0000, 0.9146, 0.7958, 0.6846, 1.0000)
@@ -439,7 +433,6 @@ grow_vertical = 2
 mouse_filter = 2
 theme = SubResource("Theme_prototype")
 script = ExtResource("1")
-starting_units = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5"), ExtResource("6"), SubResource("Unit_test_99")])
 enemy_pool = Array[ExtResource("2")]([ExtResource("4"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("5"), ExtResource("6"), ExtResource("18")])
 encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_aqueduct"), SubResource("Encounter_burial"), SubResource("Encounter_cistern"), SubResource("Encounter_market"), SubResource("Encounter_ossuary"), SubResource("Encounter_gatekeeper"), SubResource("Encounter_inner_streets"), SubResource("Encounter_roofs"), SubResource("Encounter_barracks"), SubResource("Encounter_molting"), SubResource("Encounter_aviary"), SubResource("Encounter_procession"), SubResource("Encounter_reliquary"), SubResource("Encounter_inner_gatekeeper"), SubResource("Encounter_spire"), SubResource("Encounter_underkeep"), SubResource("Encounter_rookery"), SubResource("Encounter_parade"), SubResource("Encounter_hatchery"), SubResource("Encounter_citadel_streets"), SubResource("Encounter_well"), SubResource("Encounter_citadel_lord"), SubResource("Encounter_darius")])
 

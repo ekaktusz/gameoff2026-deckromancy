@@ -43,11 +43,17 @@ func _check_gameplay() -> void:
 	game.encounters.assign([encounter, next_encounter])
 	var rook := load("res://Gameplay/Units/rook_captain.tres") as UnitDefinition
 	var hound := load("res://Gameplay/Units/grave_hound.tres") as UnitDefinition
-	game.starting_units.assign([hound, rook])
+	var guard := load("res://Gameplay/Units/silt_guard.tres") as UnitDefinition
+	var spare := load("res://Gameplay/Units/bone_ward.tres") as UnitDefinition
+	game.enemy_pool.assign([hound, rook, guard, spare])
 	root.add_child(game)
 	root.get_node("MusicPlayer/AudioStreamPlayer").stop()
 	var yard = game.get_node("World/GraveyardScene")
-	var starters: Array[UnitState] = game.get("_starting_graveyard").duplicate()
+	var offer: Dictionary[UnitDefinition, UnitState] = {}
+	for unit: UnitState in game.get("_starting_graveyard"):
+		offer[unit.definition] = unit
+	var starters: Array[UnitState] = [offer[hound], offer[rook]]
+	var continue_button := yard.get_node("Continue") as Button
 	var first_card: Vector2 = yard.card_global_position(starters[0])
 	var run: DeckRun = game.get("_run")
 	_pointer(first_card, first_card)
@@ -64,14 +70,23 @@ func _check_gameplay() -> void:
 	_pointer(army_slots.slot_position(0), army_slots.slot_position(3))
 	_pointer(army_slots.slot_position(3), army_slots.slot_position(1))
 	_expect(run.rp == 1, "Rearranging starting slots must not spend RiP")
-	var guard := load("res://Gameplay/Units/silt_guard.tres") as UnitDefinition
-	run.army.append(UnitState.new(guard))
-	yard.continue_requested.emit()
+	_expect(continue_button.disabled, "Two starters cannot enter the city")
+	_pointer(yard.card_global_position(offer[guard]), army_slots.slot_position(2))
+	_expect(not continue_button.disabled, "Three starters can enter the city")
+	_pointer(yard.card_global_position(offer[spare]), army_slots.slot_position(4))
+	_expect(run.army.size() == 3 and not run.army.has(offer[spare]), "Pick only three starters")
+	_expect(run.rp == 0, "Each starting card costs one RiP")
+	# Give the combat fixture enough RiP to exercise three more revivals.
+	run.add_rp(1)
+	continue_button.pressed.emit()
 	var map := game.get_node("Screen/MapScene") as Control
 	_expect(map.get_node("ArmyCards").get_child_count() == 3, "Map must show the army's cards")
 	_expect(not map.get_node("Retry").visible, "There should be no extra start button")
 	var button := map.get_node("Graph").get_child(0) as Button
 	_expect(button.tooltip_text == "2× Bug", "Map preview must show enemy types and counts")
+	var preview := button.call("_make_custom_tooltip", button.tooltip_text) as Label
+	_expect(preview.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "Center enemy types")
+	preview.free()
 	button.pressed.emit()
 	_expect(not game.get_node("MapBackground").visible, "Map background must hide in battle")
 	var battle_view: Node = game.get_node("World/BattleGround")
@@ -187,7 +202,13 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	root.get_node("MusicPlayer/AudioStreamPlayer").stop()
 	var background := game.get_node("MapBackground") as TextureRect
 	_expect(not background.visible, "City background must be hidden in the starting graveyard")
-	game.get_node("World/GraveyardScene").continue_requested.emit()
+	var offered_definitions: Array[UnitDefinition] = []
+	for unit: UnitState in game.get("_starting_graveyard"):
+		_expect(game.enemy_pool.has(unit.definition), "Starters come from the base unit pool")
+		_expect(not offered_definitions.has(unit.definition), "Starters must be distinct")
+		offered_definitions.append(unit.definition)
+	_expect(offered_definitions.size() == 4, "Offer four starters per run")
+	game._show_map()
 	var city_start := load("res://assets/backgrounds/city_00.png") as Texture2D
 	_expect(background.visible and background.texture == city_start, "Map must begin with city 00")
 	var stage := 0
@@ -198,7 +219,7 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 		_expect(background.texture == texture, "Wrong map background after %s" % encounter.title)
 	_expect(stage == 4, "Darius must unlock city 04")
 	game.get_node("Screen/MapScene").retry_requested.emit()
-	game.get_node("World/GraveyardScene").continue_requested.emit()
+	game._show_map()
 	_expect(background.texture == city_start, "A new run must restore city 00")
 	game.queue_free()
 

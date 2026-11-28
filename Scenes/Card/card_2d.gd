@@ -28,7 +28,7 @@ const DRAG_THRESHOLD := 10.0
 const NAME_FONT_SIZE := 17
 const NAME_MIN_FONT_SIZE := 13
 const HOVER_Z := 5
-const DRAG_Z := 30
+const DRAG_Z := 32
 
 static var _opaque_bounds: Dictionary[Texture2D, Rect2] = {}
 
