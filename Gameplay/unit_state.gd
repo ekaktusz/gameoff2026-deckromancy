@@ -57,7 +57,10 @@ func combat_hp() -> int:
 
 
 func set_battle_bonus(amount: int) -> void:
-	bonus_hp = clampi(bonus_hp + amount - battle_bonus, 0, amount)
+	if definition.bonus_raises_hp():
+		bonus_hp = clampi(bonus_hp + amount - battle_bonus, 0, amount)
+	else:
+		bonus_hp = 0
 	battle_bonus = amount
 
 

@@ -276,7 +276,7 @@ func _on_action_pressed() -> void:
 		return
 
 	var previous_rp := _battle.run.rp
-	var previous_dead := _battle.graveyard.size()
+	var previous_fallen := _battle.fallen_count
 	_selected_column = -1
 	_busy = true
 	_refresh()
@@ -299,7 +299,7 @@ func _on_action_pressed() -> void:
 			_battle.round_number,
 			enemy_status,
 			_battle.last_shift_count,
-			_battle.graveyard.size() - previous_dead,
+			_battle.fallen_count - previous_fallen,
 			_battle.run.rp - previous_rp,
 		]
 	)

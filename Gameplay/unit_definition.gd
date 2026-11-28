@@ -21,7 +21,7 @@ const FACTION_NAMES := {
 	Faction.MAMMAL: "Mammal",
 }
 const ABILITY_DESCRIPTIONS := {
-	Ability.GRAVEYARD: "Base +1/+1 per graveyard card",
+	Ability.GRAVEYARD: "Base +1 attack per graveyard card",
 	Ability.ARMY_MARKS: "+1/+1 per MARK on its allies",
 	Ability.OWN_MARKS: "+4/+4 per MARK on this card",
 	Ability.ALLIES_TO_RIGHT: "Shifts left. +1/+1 per ally to its right",
@@ -49,6 +49,11 @@ const ABILITY_DESCRIPTIONS := {
 
 func battle_ability(is_enemy: bool) -> Ability:
 	return Ability.NONE if is_enemy and ability == Ability.GRAVEYARD else ability
+
+
+## Whether the ability's battle bonus also raises HP, not only attack.
+func bonus_raises_hp() -> bool:
+	return ability != Ability.GRAVEYARD
 
 
 func shifts_left() -> bool:

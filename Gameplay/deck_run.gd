@@ -5,8 +5,11 @@ const MAX_UNITS := 5
 const STARTING_ARMY_SIZE := 3
 const STARTING_RP := 3
 const MAX_RP := 5
+const MAX_GRAVEYARD := 9
 
 var army: Array[UnitState] = []
+## Dead units, oldest first. Kept across battles; the oldest drops out past MAX_GRAVEYARD.
+var graveyard: Array[UnitState] = []
 var starting_slots: Dictionary[UnitState, int] = {}
 var rp: int = STARTING_RP
 var cleared_encounters: Array[EncounterDefinition] = []
@@ -48,6 +51,12 @@ func enemy_lineup(
 		lineup.append(pool.pick_random())
 	_lineups[encounter] = lineup
 	return lineup
+
+
+func bury(unit: UnitState) -> void:
+	graveyard.append(unit)
+	while graveyard.size() > MAX_GRAVEYARD:
+		graveyard.pop_front()
 
 
 func add_rp(amount: int) -> int:

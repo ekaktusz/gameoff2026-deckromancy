@@ -16,6 +16,7 @@ func _check_gameplay() -> void:
 	_check_portraits()
 	_check_abilities()
 	_check_deaths()
+	_check_graveyard_persistence()
 	var game_scene := load("res://game_loop.tscn") as PackedScene
 	await _check_map_backgrounds(game_scene)
 	var game = game_scene.instantiate()
@@ -162,7 +163,8 @@ func _check_gameplay() -> void:
 	action.pressed.emit()
 	await _wait_for_action(action)
 	_expect(battle.round_number == 1 and battle.last_shift_count == 2, "Round one must shift")
-	_expect(popups.count("+1/+1") == 2, "Hound and Silt Guard both show +1/+1")
+	_expect(popups.count("+1/+1") == 1, "Grave Hound shows +1/+1")
+	_expect(popups.count("+1/+0") == 1, "Silt Guard's graveyard bonus raises attack only")
 	_expect(popups.count("+2/+2") == 1, "Rook Captain shows +2/+2 with two allies to its right")
 	_expect(popups.count("+1 RiP") == 1, "Only the enemy death should award RiP")
 	_expect(battle.run.rp == 2 and not popups.has("-1 RiP"), "Empty hits must leave RiP unchanged")
@@ -171,8 +173,7 @@ func _check_gameplay() -> void:
 	action.pressed.emit()
 	await _wait_for_action(action)
 	_expect(battle.round_number == 2 and battle.last_shift_count == 0, "Hound must not shift alone")
-	_expect(popups.count("+1/+1") == 2, "The second graveyard bonus must show its full amount")
-	_expect(popups.count("+2/+2") == 2, "Silt Guard shows +2/+2 in the second round")
+	_expect(popups.count("+2/+0") == 1, "The second graveyard bonus must show its full amount")
 	_expect(battle.enemies_defeated() and battle.run.rp == 3, "Last enemy death must award RiP")
 	_expect(battle.graveyard.has(fallen) and fallen.marks == 1, "Fallen ally must enter the yard")
 	await _check_battle_yard(battle_view, battle, action, fallen, starters[1])
@@ -597,9 +598,33 @@ func _check_abilities() -> void:
 		_expect(silt_guard.combat_hp() == remaining_hp, "Base HP damage persists")
 		for event in battle.plan_bonuses(shifts):
 			event.unit.set_battle_bonus(event.amount)
-		_expect(silt_guard.combat_hp() == remaining_hp + 1, "Graveyard bonus HP refreshes")
+		_expect(silt_guard.combat_hp() == remaining_hp, "Graveyard bonus must not add HP")
+		_expect(
+			silt_guard.combat_attack() == silt_guard.attack + 1, "Graveyard bonus attack refreshes"
+		)
 		_expect(battle.allies[4 - round_index] == crow, "Ash Crow shifts left again each round")
 		_expect(ram.battle_bonus == round_index - 1, "Gutter Ram grows each round it stays put")
+
+
+func _check_graveyard_persistence() -> void:
+	var run := DeckRun.new()
+	run.army.append(UnitState.new(UnitDefinition.new()))
+	var encounter := EncounterDefinition.new()
+	encounter.enemies.append(UnitDefinition.new())
+	var first := BattleState.new(run, encounter)
+	var enemy := first.enemies[2]
+	first.apply_death(BattleEvent.new(BattleEvent.Kind.DEATH, BattleEvent.Side.ENEMY, enemy, 2))
+	_expect(first.fallen_count == 1, "Deaths are counted per battle")
+	var second := BattleState.new(run, encounter)
+	_expect(second.graveyard == [enemy], "The graveyard carries over to the next battle")
+	_expect(second.fallen_count == 0, "A new battle starts with no fallen units")
+	var newest: UnitState
+	for index in DeckRun.MAX_GRAVEYARD:
+		newest = UnitState.new(UnitDefinition.new())
+		run.bury(newest)
+	_expect(run.graveyard.size() == 9, "The graveyard holds at most 9 units")
+	_expect(not run.graveyard.has(enemy), "The oldest unit drops out of a full graveyard")
+	_expect(run.graveyard.back() == newest, "The newest unit stays in the graveyard")
 
 
 func _check_deaths() -> void:

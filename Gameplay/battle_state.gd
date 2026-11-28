@@ -7,8 +7,13 @@ var run: DeckRun
 var encounter: EncounterDefinition
 var allies: Array[UnitState] = []
 var enemies: Array[UnitState] = []
-var graveyard: Array[UnitState] = []
+## The run's graveyard, shared across battles.
+var graveyard: Array[UnitState]:
+	get:
+		return run.graveyard
 var round_number: int = 0
+## Units on both rows that died this battle.
+var fallen_count: int = 0
 ## Units on both rows that changed column in the latest round.
 var last_shift_count: int = 0
 
@@ -206,7 +211,8 @@ func apply_death(event: BattleEvent) -> int:
 	unit.set_battle_bonus(0)
 	if event.sacrificed:
 		unit.marks += 1
-	graveyard.append(unit)
+	run.bury(unit)
+	fallen_count += 1
 	if is_ally:
 		run.army.erase(unit)
 		return 0
