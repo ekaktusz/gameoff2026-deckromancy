@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="UnitDefinition" format=3]
+[gd_resource type="Resource" script_class="UnitDefinition" format=3 uid="uid://i1d1sjvhi8w8"]
 
-[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/boss_darius.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/boss_darius_noveny_reteg.png" id="3"]
+[ext_resource type="Script" uid="uid://d3hynmklnka5y" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://dmrmbm8qjnxtn" path="res://assets/units/bosses/boss_darius.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://dd0oeoo3gn6gv" path="res://assets/units/bosses/boss_darius_noveny_reteg.png" id="3"]
 
 [resource]
 script = ExtResource("1")

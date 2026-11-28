@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="UnitDefinition" format=3]
+[gd_resource type="Resource" script_class="UnitDefinition" format=3 uid="uid://dmgyamjc4njtb"]
 
-[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/madar 1 greyscale.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/madar 1 noveny.png" id="3"]
+[ext_resource type="Script" uid="uid://d3hynmklnka5y" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://ohic3c34kl5c" path="res://assets/units/birds/madar 1 greyscale.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://dhug37x345wit" path="res://assets/units/birds/madar 1 noveny.png" id="3"]
 
 [resource]
 script = ExtResource("1")

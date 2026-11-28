@@ -19,6 +19,7 @@ const ENEMY := BattleEvent.Side.ENEMY
 const ANIM_SPEED := 1.0
 const SWAP_ARC := 70.0
 const DEAL_OFFSET := 760.0
+const BACKGROUND_PAN := Vector2(-0.65, 0.55)
 const DAMAGE_COLOR := Color(1, 0.86, 0.74)
 const GAIN_COLOR := Color(0.55, 1, 0.45)
 const STAT_LOSS_COLOR := Color(1, 0.4, 0.35)
@@ -27,7 +28,10 @@ var _battle: BattleState
 var _cards: Dictionary = {}
 var _selected_column: int = -1
 var _busy: bool = false
+var _background_progress: float = 0.0
 
+@onready var _background: Sprite2D = $Background
+@onready var _background_scale := _background.scale
 @onready var _enemy_slots: SlotRow = $EnemySlots
 @onready var _ally_slots: SlotRow = $AllySlots
 @onready var _card_layer: Node2D = $Cards
@@ -40,8 +44,14 @@ var _busy: bool = false
 @onready var _sacrifice: Button = $HUD/Sacrifice
 
 
-func display(battle: BattleState) -> void:
+func _ready() -> void:
+	get_viewport().size_changed.connect(_position_background)
+
+
+func display(battle: BattleState, background_progress: float = 0.0) -> void:
 	_battle = battle
+	_background_progress = clampf(background_progress, 0.0, 1.0)
+	_position_background()
 	_title.text = battle.encounter.title
 	_status.text = "Drag your cards to arrange them, or click two slots to swap."
 	for side: int in [ENEMY, ALLY]:
@@ -50,6 +60,15 @@ func display(battle: BattleState) -> void:
 			if row[column] != null:
 				_add_card(row[column], side, _slot_position(side, column))
 	await _deal_in()
+
+
+func _position_background() -> void:
+	var viewport_size := get_viewport_rect().size
+	var base_size := _background.texture.get_size() * _background_scale
+	var cover := maxf(1.0, maxf(viewport_size.x / base_size.x, viewport_size.y / base_size.y))
+	_background.scale = _background_scale * cover
+	var margin := (base_size * cover - viewport_size).max(Vector2.ZERO) / 2.0
+	_background.position = viewport_size / 2.0 + margin * BACKGROUND_PAN * _background_progress
 
 
 func _deal_in() -> void:
@@ -361,7 +380,9 @@ func _play_shifts(shifts: Array[BattleEvent]) -> void:
 	for event in shifts:
 		var card: Card2D = _cards[event.unit]
 		var arc := 0.0
-		if event.swapped:
+		if absi(event.to_column - event.column) > 1:
+			arc = SWAP_ARC
+		elif event.swapped:
 			arc = SWAP_ARC if event.to_column > event.column else -SWAP_ARC
 		tweens.append(card.move_to(_slot_position(event.side, event.to_column), _t(0.3), arc))
 	if not tweens.is_empty():

@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="UnitDefinition" format=3]
+[gd_resource type="Resource" script_class="UnitDefinition" format=3 uid="uid://7r3gnwn15ujd"]
 
-[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/emlos_3.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/emlos_3_noveny_reteg.png" id="3"]
+[ext_resource type="Script" uid="uid://d3hynmklnka5y" path="res://Gameplay/unit_definition.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://ccty44y3catun" path="res://assets/units/mammals/emlos_3.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://bj1580i1w1fye" path="res://assets/units/mammals/emlos_3_noveny_reteg.png" id="3"]
 
 [resource]
 script = ExtResource("1")

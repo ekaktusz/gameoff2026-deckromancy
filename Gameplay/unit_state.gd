@@ -4,6 +4,7 @@ extends RefCounted
 const POOP_MARKS := 4
 
 var definition: UnitDefinition
+var portrait_gradient: GradientTexture1D
 var attack: int
 var hp: int
 var marks: int = 0
@@ -11,8 +12,9 @@ var battle_bonus: int = 0
 var bonus_hp: int = 0
 
 
-func _init(unit_definition: UnitDefinition) -> void:
+func _init(unit_definition: UnitDefinition, gradient: GradientTexture1D = null) -> void:
 	definition = unit_definition
+	portrait_gradient = gradient
 	attack = definition.attack
 	hp = definition.hp
 

@@ -13,17 +13,23 @@ var round_number: int = 0
 var last_shift_count: int = 0
 
 
-func _init(deck_run: DeckRun, battle_encounter: EncounterDefinition) -> void:
+func _init(
+	deck_run: DeckRun, battle_encounter: EncounterDefinition, enemy_pool: Array[UnitDefinition] = []
+) -> void:
 	run = deck_run
 	encounter = battle_encounter
 	allies.resize(COLUMN_COUNT)
 	enemies.resize(COLUMN_COUNT)
 	for column in run.army.size():
 		allies[column] = run.army[column]
-	var enemy_count := mini(encounter.enemies.size(), COLUMN_COUNT)
+	var lineup := run.enemy_lineup(encounter, enemy_pool)
+	var enemy_count := mini(lineup.size(), COLUMN_COUNT)
 	var first_column := floori((COLUMN_COUNT - enemy_count) / 2.0)
 	for index in enemy_count:
-		enemies[first_column + index] = UnitState.new(encounter.enemies[index])
+		if lineup[index] != null:
+			enemies[first_column + index] = UnitState.new(
+				lineup[index], encounter.portrait_gradient
+			)
 
 
 func enemies_defeated() -> bool:
@@ -256,7 +262,17 @@ func _shift_row(row: Array[UnitState], side: int, events: Array[BattleEvent]) ->
 		var bird := row[column]
 		if bird == null or bird.is_poop_warrior() or not bird.definition.shifts_left():
 			continue
-		var target := row[column - 1]
+		var destination := column - 1
+		var target := row[destination]
+		if (
+			target != null
+			and bird.definition.ability == UnitDefinition.Ability.DIE_IF_BLOCKED
+			and _is_holding(target)
+		):
+			destination -= 1
+			if destination < 0 or row[destination] != null:
+				continue
+			target = null
 		if target != null:
 			if (
 				not target.definition.can_be_displaced()
@@ -265,7 +281,15 @@ func _shift_row(row: Array[UnitState], side: int, events: Array[BattleEvent]) ->
 			):
 				continue
 			displaced.append(target)
-			events.append(_shift_event(side, target, column - 1, column, true))
-		row[column - 1] = bird
+			events.append(_shift_event(side, target, destination, column, true))
+		row[destination] = bird
 		row[column] = target
-		events.append(_shift_event(side, bird, column, column - 1, target != null))
+		events.append(_shift_event(side, bird, column, destination, target != null))
+
+
+func _is_holding(unit: UnitState) -> bool:
+	return (
+		unit.is_poop_warrior()
+		or unit.definition.ability == UnitDefinition.Ability.HOLD_GROWTH
+		or (not unit.definition.shifts_left() and not unit.definition.can_be_displaced())
+	)

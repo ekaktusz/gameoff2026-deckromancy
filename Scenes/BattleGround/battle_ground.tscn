@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Scenes/BattleGround/battle_view.gd" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/Graveyard/graveyard_scene.tscn" id="2"]
 [ext_resource type="Script" path="res://Scenes/BattleGround/slot_row.gd" id="3"]
-[ext_resource type="Texture2D" path="res://assets/city_00.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/city_00.png" id="4"]
 
 [node name="BattleGround" type="Node2D"]
 script = ExtResource("1")

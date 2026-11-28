@@ -9,6 +9,7 @@ var army: Array[UnitState] = []
 var rp: int = STARTING_RP
 var cleared_encounters: Array[EncounterDefinition] = []
 var defeated: bool = false
+var _lineups: Dictionary[EncounterDefinition, Array] = {}
 
 
 static func route_successors(
@@ -27,6 +28,24 @@ static func route_successors(
 		if index >= 0 and index + 1 < route.size():
 			successors.append(route[index + 1])
 	return successors
+
+
+func enemy_lineup(
+	encounter: EncounterDefinition, enemy_pool: Array[UnitDefinition]
+) -> Array[UnitDefinition]:
+	if encounter.random_enemy_count <= 0:
+		return encounter.enemies
+	if _lineups.has(encounter):
+		return _lineups[encounter]
+	var pool := enemy_pool.filter(func(unit: UnitDefinition) -> bool: return unit != null)
+	if pool.is_empty():
+		return encounter.enemies
+	var lineup: Array[UnitDefinition] = []
+	# ponytail: Each slot draws independently once per run, including the map preview.
+	for index in mini(encounter.random_enemy_count, MAX_UNITS):
+		lineup.append(pool.pick_random())
+	_lineups[encounter] = lineup
+	return lineup
 
 
 func add_rp(amount: int) -> int:

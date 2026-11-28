@@ -25,7 +25,7 @@ const ABILITY_DESCRIPTIONS := {
 	Ability.ARMY_MARKS: "+1/+1 per MARK on its side",
 	Ability.OWN_MARKS: "+4/+4 per MARK on this card",
 	Ability.ALLIES_TO_RIGHT: "Shifts left. +1/+1 per ally to its right",
-	Ability.DIE_IF_BLOCKED: "Shifts left. Dies if blocked",
+	Ability.DIE_IF_BLOCKED: "Shifts left, hops a still ally, dies if blocked",
 	Ability.SWAP_GROWTH: "+1/+1 when it swaps slots",
 	Ability.HOLD_GROWTH: "+1/+1 each round it stays put",
 	Ability.SHIFT_LEFT: "Shifts left at the start of each round",
