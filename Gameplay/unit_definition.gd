@@ -21,7 +21,7 @@ const FACTION_NAMES := {
 	Faction.MAMMAL: "Mammal",
 }
 const ABILITY_DESCRIPTIONS := {
-	Ability.GRAVEYARD: "base +1/+1 per graveyard card",
+	Ability.GRAVEYARD: "Base +1/+1 per graveyard card",
 	Ability.ARMY_MARKS: "+1/+1 per MARK on its side",
 	Ability.OWN_MARKS: "+4/+4 per MARK on this card",
 	Ability.ALLIES_TO_RIGHT: "Shifts left. +1/+1 per ally to its right",

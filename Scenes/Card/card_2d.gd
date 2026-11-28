@@ -25,6 +25,8 @@ const HIT_FLASH := Color(1.7, 0.5, 0.45)
 const HOVER_SFX := preload("res://assets/sfx/hover.tres")
 const SELECT_SFX := preload("res://assets/sfx/select.wav")
 const DRAG_THRESHOLD := 10.0
+const NAME_FONT_SIZE := 17
+const NAME_MIN_FONT_SIZE := 13
 const HOVER_Z := 5
 const DRAG_Z := 30
 
@@ -134,7 +136,7 @@ func display(unit_state: UnitState, card_look: Look, for_revival: bool = false) 
 	)
 	_marks = unit.marks + int(for_revival)
 	var is_poop := unit.is_poop_warrior(for_revival)
-	_name.text = unit.title(for_revival)
+	fit_name(unit.title(for_revival))
 	_faction.text = "" if is_poop else UnitDefinition.FACTION_NAMES.get(unit.definition.faction, "")
 	var ability := unit.definition.battle_ability(look == Look.ENEMY)
 	_ability.text = "" if is_poop else UnitDefinition.ABILITY_DESCRIPTIONS.get(ability, "")
@@ -143,6 +145,19 @@ func display(unit_state: UnitState, card_look: Look, for_revival: bool = false) 
 	_frame.texture = FRAMES[clampi(_marks - 1, 0, FRAMES.size() - 1)]
 	_marks_layer.queue_redraw()
 	_update_portrait(is_poop)
+
+
+## Sets the name, shrinking the font so long names fit the name plaque.
+func fit_name(title: String) -> void:
+	_name.text = title
+	var font := _name.get_theme_font("font")
+	var font_size := NAME_FONT_SIZE
+	while (
+		font_size > NAME_MIN_FONT_SIZE
+		and font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > _name.size.x
+	):
+		font_size -= 1
+	_name.add_theme_font_size_override("font_size", font_size)
 
 
 func _update_portrait(is_poop: bool) -> void:
