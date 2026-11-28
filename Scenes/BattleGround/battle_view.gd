@@ -9,7 +9,6 @@ const CARD_SCENE := preload("res://Scenes/Card/card_2d.tscn")
 ## Picks one of the generated hit sounds with a random pitch each time.
 const HIT_SFX := preload("res://assets/sfx/hit.tres")
 const SHIFT_SFX := preload("res://assets/sfx/shift.tres")
-const SELECT_SFX := preload("res://assets/sfx/select.wav")
 ## An attack that lands in an empty slot (either side).
 const EMPTY_HIT_SFX := preload("res://assets/sfx/empty_hit.tres")
 const RIP_GAIN_SFX := preload("res://assets/sfx/rip_gain.wav")
@@ -53,7 +52,7 @@ func display(battle: BattleState, background_progress: float = 0.0) -> void:
 	_background_progress = clampf(background_progress, 0.0, 1.0)
 	_position_background()
 	_title.text = battle.encounter.title
-	_status.text = "Drag your cards to arrange them, or click two slots to swap."
+	_status.text = "Drag your cards to arrange them."
 	for side: int in [ENEMY, ALLY]:
 		var row := _row(side)
 		for column in BattleState.COLUMN_COUNT:
@@ -101,17 +100,9 @@ func _refresh() -> void:
 	for unit: UnitState in _cards:
 		var card: Card2D = _cards[unit]
 		var is_ally := card.look == Card2D.Look.ALLY
-		card.clickable = is_ally and not _busy
-		card.draggable = arranging and card.clickable
+		card.clickable = is_ally and not arranging and not _busy
+		card.draggable = is_ally and arranging and not _busy
 		card.hover_enabled = not _busy
-		card.selected = _selected_column != -1 and _battle.allies[_selected_column] == unit
-
-	var targets: Array[int] = []
-	if arranging and _selected_column != -1 and not _busy:
-		for column in BattleState.COLUMN_COUNT:
-			if column != _selected_column:
-				targets.append(column)
-	_ally_slots.highlighted = targets
 
 	_refresh_rip()
 	_graveyard.visible = not arranging
@@ -182,51 +173,16 @@ func _add_card(unit: UnitState, side: int, at: Vector2) -> Card2D:
 
 
 func _on_card_clicked(unit: UnitState) -> void:
-	if _busy:
+	if _busy or _battle.round_number == 0:
 		return
 	var column := _battle.allies.find(unit)
 	if column == -1:
 		return
-	if _battle.round_number == 0:
-		_select_slot(column)
-	else:
-		_selected_column = -1 if _selected_column == column else column
-		_refresh()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	var button := event as InputEventMouseButton
-	if button == null or not button.pressed or button.button_index != MOUSE_BUTTON_LEFT:
-		return
-	if _busy or _battle == null or _battle.round_number != 0 or _selected_column == -1:
-		return
-	var point := get_canvas_transform().affine_inverse() * button.position
-	var column := _ally_slots.column_at(point)
-	if column != -1 and _battle.allies[column] == null:
-		get_viewport().set_input_as_handled()
-		SoundManager.play_sfx(SELECT_SFX)
-		_select_slot(column)
-
-
-## First click picks a slot holding a card; the second swaps it with any slot.
-func _select_slot(column: int) -> void:
-	if _selected_column == -1:
-		if _battle.allies[column] != null:
-			_selected_column = column
-		_refresh()
-		return
-	if column == _selected_column:
-		_selected_column = -1
-		_refresh()
-		return
-
-	_swap_slots(_selected_column, column)
+	_selected_column = -1 if _selected_column == column else column
+	_refresh()
 
 
 func _on_ally_dragged(point: Vector2, unit: UnitState) -> void:
-	_selected_column = -1
-	for card: Card2D in _cards.values():
-		card.selected = false
 	var column := _ally_slots.column_at(point)
 	_highlight_drop_target(column if column != -1 and _battle.allies[column] != unit else -1)
 

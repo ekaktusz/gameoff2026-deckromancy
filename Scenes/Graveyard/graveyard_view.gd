@@ -1,9 +1,8 @@
 class_name GraveyardView
 extends Node2D
 ## Dead units laid out as a grid of cards; drag one to the army to raise it. As the first
-## screen of a run it also shows the raised army in a row below the grid, and
-## raised cards slide from the grid into that row. The battle screen embeds it
-## at a smaller scale with the background hidden.
+## screen of a run it also shows the raised army in a row below the grid.
+## The battle screen embeds it at a smaller scale with the background hidden.
 
 signal unit_dragged(unit: UnitState, point: Vector2)
 signal unit_dropped(unit: UnitState, point: Vector2)
@@ -20,8 +19,6 @@ const MOVE_TIME := 0.35
 @export var cell_size: Vector2 = Vector2(240, 290)
 ## Local centre of the first graveyard card.
 @export var grid_origin: Vector2 = Vector2(166, 324)
-## Local centre of the first army card (starting graveyard only).
-@export var army_origin: Vector2 = Vector2(166, 744)
 
 var interactions_enabled: bool = true
 var _cards: Dictionary = {}
@@ -29,7 +26,7 @@ var _cards: Dictionary = {}
 @onready var _background: Sprite2D = $Background
 @onready var _status: Label = $Status
 @onready var _army_label: Label = $ArmyLabel
-@onready var _army_drop_zone: Panel = $ArmyDropZone
+@onready var _army_slots: SlotRow = $ArmySlots
 @onready var _card_layer: Node2D = $Cards
 @onready var _continue_button: Button = $Continue
 
@@ -52,13 +49,13 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 		_status.text += "\nNo creatures to raise"
 	elif interactions_enabled and run.can_raise():
 		_status.text += (
-			"\nDrag a card to your army for 1 RiP"
+			"\nDrag a card to an empty army slot for 1 RiP"
 			if is_starting_yard
 			else "\nDrag to an empty slot for 1 RiP"
 		)
 
 	_army_label.visible = is_starting_yard
-	_army_drop_zone.visible = is_starting_yard
+	_army_slots.visible = is_starting_yard
 	_continue_button.visible = is_starting_yard
 	_continue_button.disabled = run.army.is_empty()
 
@@ -66,8 +63,8 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 	for index in dead.size():
 		targets[dead[index]] = grid_origin + _cell(index)
 	if is_starting_yard:
-		for index in run.army.size():
-			targets[run.army[index]] = army_origin + Vector2(cell_size.x * index, 0)
+		for unit in run.army:
+			targets[unit] = to_local(_army_slots.slot_position(run.starting_slots[unit]))
 
 	for unit: UnitState in _cards.keys():
 		if not targets.has(unit):
@@ -90,10 +87,14 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 			card.drag_cancelled.connect(drag_cancelled.emit)
 			_cards[unit] = card
 			card.pop()
+		elif is_starting_yard:
+			# ponytail: Snap to slots so a card can be dragged again immediately.
+			card.global_position = target
 		elif not card.global_position.is_equal_approx(target):
 			card.move_to(target, MOVE_TIME)
 		card.display(unit, Card2D.Look.DEAD if for_revival else Card2D.Look.ALLY, for_revival)
-		card.draggable = for_revival and interactions_enabled and run.can_raise()
+		var can_drag := run.can_raise() if for_revival else is_starting_yard
+		card.draggable = interactions_enabled and can_drag
 		card.hover_enabled = interactions_enabled
 		card.dimmed = for_revival and not run.can_raise()
 
@@ -115,10 +116,8 @@ func _cell(index: int) -> Vector2:
 	return Vector2(cell_size.x * (index % columns), cell_size.y * floori(float(index) / columns))
 
 
-func is_army_drop(point: Vector2) -> bool:
-	return (
-		_army_drop_zone.is_visible_in_tree() and _army_drop_zone.get_global_rect().has_point(point)
-	)
+func army_slot_at(point: Vector2) -> int:
+	return _army_slots.column_at(point) if _army_slots.is_visible_in_tree() else -1
 
 
 func _on_continue_pressed() -> void:

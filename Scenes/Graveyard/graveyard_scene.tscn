@@ -3,17 +3,7 @@
 [ext_resource type="Script" path="res://Scenes/Graveyard/graveyard_view.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/city_00.png" id="2"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_army"]
-bg_color = Color(0.08, 0.07, 0.06, 0.72)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.8, 0.7, 0.58, 0.4)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+[ext_resource type="Script" path="res://Scenes/BattleGround/slot_row.gd" id="3"]
 
 [node name="GraveyardScene" type="Node2D"]
 position = Vector2(64, 36)
@@ -58,14 +48,25 @@ theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 32
 text = "Your army"
 
-[node name="ArmyDropZone" type="Panel" parent="."]
+[node name="ArmySlots" type="Node2D" parent="."]
 visible = false
-offset_left = 52.0
-offset_top = 600.0
-offset_right = 1240.0
-offset_bottom = 890.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_army")
+position = Vector2(0, 744)
+script = ExtResource("3")
+
+[node name="Slot0" type="Marker2D" parent="ArmySlots"]
+position = Vector2(166, 0)
+
+[node name="Slot1" type="Marker2D" parent="ArmySlots"]
+position = Vector2(406, 0)
+
+[node name="Slot2" type="Marker2D" parent="ArmySlots"]
+position = Vector2(646, 0)
+
+[node name="Slot3" type="Marker2D" parent="ArmySlots"]
+position = Vector2(886, 0)
+
+[node name="Slot4" type="Marker2D" parent="ArmySlots"]
+position = Vector2(1126, 0)
 
 [node name="Cards" type="Node2D" parent="."]
 

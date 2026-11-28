@@ -36,10 +36,18 @@ func _start_run() -> void:
 
 
 func _on_starting_unit_dropped(unit: UnitState, point: Vector2, graveyard: GraveyardView) -> void:
-	if not graveyard.is_army_drop(point) or not _run.try_raise(unit, _starting_graveyard):
+	var slot := graveyard.army_slot_at(point)
+	if slot == -1:
 		graveyard.restore_drag_position(unit)
 		return
-	# ponytail: The starting army fills left to right within the shared drop zone.
+	var occupant := _run.starting_slots.find_key(slot) as UnitState
+	if _run.starting_slots.has(unit):
+		if occupant != null:
+			_run.starting_slots[occupant] = _run.starting_slots[unit]
+	elif occupant != null or not _run.try_raise(unit, _starting_graveyard):
+		graveyard.restore_drag_position(unit)
+		return
+	_run.starting_slots[unit] = slot
 	graveyard.display(_run, _starting_graveyard, true)
 
 

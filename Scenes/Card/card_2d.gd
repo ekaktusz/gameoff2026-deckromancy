@@ -52,11 +52,7 @@ var hover_enabled: bool = true:
 var dimmed: bool = false:
 	set(value):
 		dimmed = value
-		modulate = _rest_modulate()
-var selected: bool = false:
-	set(value):
-		selected = value
-		queue_redraw()
+		_art_modulate = _rest_modulate()
 ## Scale the card rests at; animations return to it.
 var base_scale: Vector2 = Vector2.ONE:
 	set(value):
@@ -72,6 +68,14 @@ var _pressed: bool = false
 var _dragging: bool = false
 var _press_position: Vector2
 var _drag_origin: Vector2
+var _art_modulate: Color = Color.WHITE:
+	set(value):
+		_art_modulate = value
+		if _attack == null:
+			return
+		for child in get_children():
+			if child is CanvasItem and child != _attack and child != _hp:
+				child.modulate = value
 
 @onready var _portrait: Sprite2D = $Portrait
 @onready var _default_portrait_material := _portrait.material as ShaderMaterial
@@ -87,18 +91,35 @@ var _drag_origin: Vector2
 
 func _ready() -> void:
 	_marks_layer.draw.connect(_draw_marks)
+	_art_modulate = _rest_modulate()
+	_update_stat_color(null)
 
 
 func _set_portrait_gradient(gradient: GradientTexture1D) -> void:
 	if gradient == _portrait_gradient:
 		return
 	_portrait_gradient = gradient
+	_update_stat_color(gradient)
 	if gradient == null:
 		_portrait.material = _default_portrait_material
 		return
 	var gradient_material := _default_portrait_material.duplicate() as ShaderMaterial
 	gradient_material.set_shader_parameter("gradient_map", gradient)
 	_portrait.material = gradient_material
+
+
+func _update_stat_color(gradient: GradientTexture1D) -> void:
+	if gradient == null or gradient.gradient == null:
+		gradient = _default_portrait_material.get_shader_parameter("gradient_map")
+	if gradient == null or gradient.gradient == null:
+		return
+	var color := gradient.gradient.sample(0.0)
+	for stop in gradient.gradient.colors:
+		if stop.s * stop.v > color.s * color.v:
+			color = stop
+	color.a = 1.0
+	_attack.add_theme_color_override("font_color", color)
+	_hp.add_theme_color_override("font_color", color)
 
 
 ## Shows a unit. With `for_revival` it previews the unit as it would come back
@@ -160,11 +181,6 @@ func _texture_bounds(texture: Texture2D) -> Rect2:
 				bounds = Rect2(used)
 		_opaque_bounds[texture] = bounds
 	return _opaque_bounds[texture]
-
-
-func _draw() -> void:
-	if selected:
-		draw_rect(Rect2(-SIZE / 2, SIZE).grow(3.0), Color.WHITE, false, 2.0)
 
 
 func _draw_marks() -> void:
@@ -318,11 +334,11 @@ func lunge(point: Vector2, duration: float, on_impact: Callable) -> Tween:
 func hit(remaining_hp: int, duration: float) -> Tween:
 	_hp.text = str(remaining_hp)
 	var tween := create_tween()
-	tween.tween_property(self, "modulate", HIT_FLASH, duration * 0.2)
+	tween.tween_property(self, "_art_modulate", HIT_FLASH, duration * 0.2)
 	tween.parallel().tween_property(self, "rotation", 0.09, duration * 0.2)
 	tween.tween_property(self, "rotation", -0.07, duration * 0.25)
 	tween.tween_property(self, "rotation", 0.0, duration * 0.25)
-	tween.parallel().tween_property(self, "modulate", _rest_modulate(), duration * 0.55)
+	tween.parallel().tween_property(self, "_art_modulate", _rest_modulate(), duration * 0.55)
 	return tween
 
 
