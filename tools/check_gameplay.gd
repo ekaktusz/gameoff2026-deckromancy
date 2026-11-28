@@ -300,7 +300,11 @@ func _check_portraits() -> void:
 	_check_stat_color(card, DEFAULT_GRADIENT.gradient.get_color(1))
 	var title := card.get_node("Name") as Label
 	var font := load("res://assets/fonts/HoldMoney-Regular.ttf") as Font
-	_expect(font != null and title.get_theme_font("font") == font, "Cards must use Hold Money")
+	var title_font := title.get_theme_font("font") as FontVariation
+	_expect(
+		font != null and title_font != null and title_font.base_font == font,
+		"Cards must use Hold Money"
+	)
 	_check_card_labels(card)
 	var portrait := card.get_node("Portrait") as Sprite2D
 	_check_card_frames(card, portrait)
@@ -373,6 +377,17 @@ func _check_card_labels(card: Node2D) -> void:
 	for description: String in UnitDefinition.ABILITY_DESCRIPTIONS.values():
 		ability.text = description
 		_expect(ability.get_minimum_size().y <= ability_height, "Text must fit: %s" % description)
+	var title := card.get_node("Name") as Label
+	for file in DirAccess.get_files_at("res://Gameplay/Units"):
+		if not file.ends_with(".tres"):
+			continue
+		var unit := load("res://Gameplay/Units/" + file) as UnitDefinition
+		card.fit_name(unit.title)
+		var font_size := title.get_theme_font_size("font_size")
+		var width := title.get_theme_font("font").get_string_size(
+			unit.title, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size
+		).x
+		_expect(width <= title.size.x, "Name must fit: %s" % unit.title)
 	_expect(faction.position.y >= ability.position.y + ability_height, "Faction goes below ability")
 	_expect(is_zero_approx(faction.get_rect().get_center().x), "Faction must be centered")
 	var attack := card.get_node("Attack") as Label
