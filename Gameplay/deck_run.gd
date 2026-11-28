@@ -29,8 +29,10 @@ static func route_successors(
 	return successors
 
 
-func add_rp(amount: int) -> void:
+func add_rp(amount: int) -> int:
+	var before := rp
 	rp = clampi(rp + amount, 0, MAX_RP)
+	return rp - before
 
 
 func can_raise() -> bool:

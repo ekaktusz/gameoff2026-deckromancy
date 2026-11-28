@@ -13,7 +13,6 @@ const SELECT_SFX := preload("res://assets/sfx/select.wav")
 ## An attack that lands in an empty slot (either side).
 const EMPTY_HIT_SFX := preload("res://assets/sfx/empty_hit.tres")
 const RIP_GAIN_SFX := preload("res://assets/sfx/rip_gain.wav")
-const RIP_LOSS_SFX := preload("res://assets/sfx/rip_loss.wav")
 const ALLY := BattleEvent.Side.ALLY
 const ENEMY := BattleEvent.Side.ENEMY
 ## Multiplies the speed of every battle animation. Raise it to speed up playtests.
@@ -21,8 +20,8 @@ const ANIM_SPEED := 1.0
 const SWAP_ARC := 70.0
 const DEAL_OFFSET := 760.0
 const DAMAGE_COLOR := Color(1, 0.86, 0.74)
-const RIP_GAIN_COLOR := Color(0.55, 1, 0.45)
-const RIP_LOSS_COLOR := Color(1, 0.4, 0.35)
+const GAIN_COLOR := Color(0.55, 1, 0.45)
+const STAT_LOSS_COLOR := Color(1, 0.4, 0.35)
 
 var _battle: BattleState
 var _cards: Dictionary = {}
@@ -261,19 +260,10 @@ func _on_graveyard_dragged(_unit: UnitState, point: Vector2) -> void:
 func _on_graveyard_dropped(unit: UnitState, point: Vector2) -> void:
 	_clear_drop_target()
 	var column := _ally_slots.column_at(point)
-	if _busy or not _battle.can_raise_at(column):
+	if _busy or not _battle.try_raise(unit, column):
 		_graveyard.restore_drag_position(unit)
 		return
-	_on_raise_requested(unit, column)
-
-
-func _on_raise_requested(unit: UnitState, target_column: int = -1) -> void:
-	if _busy:
-		return
 	var from := _graveyard.card_global_position(unit)
-	var column := _battle.try_raise(unit, target_column)
-	if column == -1:
-		return
 
 	_busy = true
 	var card := _add_card(unit, ALLY, from)
@@ -295,11 +285,12 @@ func _on_sacrifice_pressed() -> void:
 	var event := _battle.sacrifice(_selected_column)
 	if event == null:
 		return
+	var unit_title := event.unit.title()
 	_selected_column = -1
 	_busy = true
 	_refresh()
 	await _play_death(event)
-	_status.text = "%s was sacrificed." % event.unit.title()
+	_status.text = "%s was sacrificed and gained a MARK." % unit_title
 	_busy = false
 	_refresh()
 
@@ -323,9 +314,10 @@ func _on_action_pressed() -> void:
 	_refresh()
 	_status.text = "Round %d" % (_battle.round_number + 1)
 	var shifts := _battle.begin_round()
-	await _play_shifts(shifts)
 	for card: Card2D in _cards.values():
 		card.display(card.unit, card.look)
+	await _play_shifts(shifts)
+	await _play(_battle.plan_shift_deaths(shifts))
 	await _play(_battle.plan_bonuses(shifts))
 	await _play(_battle.plan_attacks())
 
@@ -349,8 +341,16 @@ func _on_action_pressed() -> void:
 
 
 func _play(events: Array[BattleEvent]) -> void:
+	var bonus_tweens: Array[Tween] = []
 	for event in events:
-		await _play_event(event)
+		match event.kind:
+			BattleEvent.Kind.ATTACK:
+				await _play_attack(event)
+			BattleEvent.Kind.DEATH:
+				await _play_death(event)
+			BattleEvent.Kind.BONUS:
+				bonus_tweens.append(_play_bonus(event))
+	await _wait_all(bonus_tweens)
 
 
 ## All shifts of a round slide at once. Cards trading places arc past each other.
@@ -369,17 +369,18 @@ func _play_shifts(shifts: Array[BattleEvent]) -> void:
 	await _wait_all(tweens)
 
 
-func _play_event(event: BattleEvent) -> void:
-	match event.kind:
-		BattleEvent.Kind.ATTACK:
-			await _play_attack(event)
-		BattleEvent.Kind.DEATH:
-			await _play_death(event)
-		BattleEvent.Kind.RIP:
-			await _play_rip(event)
-		BattleEvent.Kind.BONUS:
-			event.unit.set_battle_bonus(event.amount)
-			(_cards[event.unit] as Card2D).display(event.unit, _look(event.side))
+func _play_bonus(event: BattleEvent) -> Tween:
+	var unit := event.unit
+	var before := Vector2i(unit.combat_attack(), unit.combat_hp())
+	unit.set_battle_bonus(event.amount)
+	var change := Vector2i(unit.combat_attack(), unit.combat_hp()) - before
+	var card: Card2D = _cards[unit]
+	card.display(unit, _look(event.side))
+	var color := GAIN_COLOR if change.x > 0 else STAT_LOSS_COLOR
+	var above := card.global_position + Vector2(0, -70)
+	return FloatingText.spawn(
+		_fx, "%+d/%+d" % [change.x, change.y], color, above, Vector2.INF, _t(1.6)
+	)
 
 
 func _play_attack(event: BattleEvent) -> void:
@@ -406,24 +407,19 @@ func _play_death(event: BattleEvent) -> void:
 		_cards.erase(event.unit)
 		await _wait(card.die(_t(0.35)))
 		card.queue_free()
-	_battle.apply_death(event)
+	var gained := _battle.apply_death(event)
 	_graveyard.visible = true
-	_graveyard.display(_battle.run, _battle.graveyard)
+	if gained == 0:
+		_graveyard.display(_battle.run, _battle.graveyard)
+	await _play_rip_gain(gained, _slot_position(event.side, event.column))
 
 
-func _play_rip(event: BattleEvent) -> void:
-	if event.rewards_column:
-		_battle.rewarded_columns.append(event.column)
-	var before := _battle.run.rp
-	var amount := clampi(before + event.amount, 0, DeckRun.MAX_RP) - before
+func _play_rip_gain(amount: int, from: Vector2) -> void:
 	if amount == 0:
 		return
-	var from := _slot_position(event.side, event.column)
-	var color := RIP_GAIN_COLOR if amount > 0 else RIP_LOSS_COLOR
 	var to := _rip.global_position + _rip.size / 2
-	await _wait(FloatingText.spawn(_fx, "%+d RiP" % amount, color, from, to, _t(0.7)))
-	SoundManager.play_sfx(RIP_GAIN_SFX if amount > 0 else RIP_LOSS_SFX)
-	_battle.run.add_rp(amount)
+	await _wait(FloatingText.spawn(_fx, "%+d RiP" % amount, GAIN_COLOR, from, to, _t(0.7)))
+	SoundManager.play_sfx(RIP_GAIN_SFX)
 	_refresh_rip()
 	if _graveyard.visible:
 		_graveyard.display(_battle.run, _battle.graveyard)

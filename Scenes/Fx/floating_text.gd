@@ -1,7 +1,7 @@
 class_name FloatingText
 extends Label
 ## A short-lived label that drifts from one point to another, fades and frees
-## itself. Used for damage numbers and RiP gains or losses.
+## itself. Used for damage, stat changes, and RiP gains.
 
 const SIZE := Vector2(240, 52)
 

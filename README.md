@@ -2,15 +2,15 @@
 
 ## Play the prototype
 
-Open the project in Godot and press **F5**, then choose **Start**. Raise at least
-one creature, then choose your path through the city's twelve encounter stages.
-The routes rejoin at the Gatekeeper, Inner Gatekeeper and Citadel Lord. Before
-each fight, drag cards to rearrange them or click two slots to swap them.
-Between rounds and after the last enemy falls, click a graveyard card to raise
-it in the first free slot or drag it to a specific vacancy. To sacrifice an
-ally, select it between rounds and press **Sacrifice**. It goes to the
-graveyard and earns no RiP. Open `game_loop.tscn` and press **F6** to start at
-the graveyard while iterating.
+Open the project in Godot and press **F5**, then choose **Start**. Drag at least
+one graveyard card into **Your army**, then click a location to enter its fight.
+The city's thirteen stages end with Darius, beyond the Citadel Lord. Before each
+fight, drag cards to rearrange them or click two slots to swap them.
+Between rounds and after the last enemy falls, drag a graveyard card into an
+empty ally slot to raise it. Fallen allies and enemies both go to the graveyard.
+To sacrifice an ally, select it between rounds and press **Sacrifice**. It gains
+a MARK as it enters the graveyard. Open `game_loop.tscn` and press **F6** to start
+at the graveyard while iterating.
 
 ## Where to work
 
@@ -18,7 +18,7 @@ the graveyard while iterating.
 | --- | --- |
 | Screen flow and encounter order | `game_loop.gd`, `game_loop.tscn` |
 | Combat, resurrection, and run state | `Gameplay/` |
-| Unit names, starting stats, shift and portraits | `Gameplay/Units/*.tres` |
+| Unit names, starting stats, abilities and portraits | `Gameplay/Units/*.tres` |
 | Card look and card animations | `Scenes/Card/card_2d.tscn`, `card_2d.gd` |
 | Battle board, slot layout and round playback | `Scenes/BattleGround/` |
 | Graveyard grid (start of run and in battle) | `Scenes/Graveyard/` |
@@ -30,39 +30,36 @@ to change the prototype content. Each encounter supports up to five enemies.
 Use **Map Stage**, **Map Lane** and **Next Lanes** to place and connect encounters.
 
 The graveyard and battle screens are Node2D scenes. Each unit's **Art** group
-sets its `portrait`, an optional `marked_portrait` shown once it carries a MARK
-(otherwise the portrait is tinted), and a `portrait_tint`. Slot positions are
+sets its `portrait` and `portrait_tint`. A same-size `mark_overlay` is drawn over
+the portrait once the unit carries a MARK. Cards without a layer use their
+`marked_portrait` or a tint. Slot positions are
 the `Slot0`–`Slot4` markers under `EnemySlots` and `AllySlots` in
 `battle_ground.tscn`. `ANIM_SPEED` in `battle_view.gd` scales every battle
 animation. The battle screen plays shifts, faction abilities and attacks in
 order. Damage applies on impact.
 
 Resurrection Points are called RiP in game. The prototype uses 3 starting RiP,
-holds at most 5 (extra gains are lost), and awards 1 RiP for an unmarked enemy
-kill. An ally attacking an empty enemy slot gains 1 RiP, but each slot pays
-out only once per battle; an enemy attacking an empty ally slot costs 1 RiP
-every time (never below 0).
+holds at most 5, and awards 1 RiP whenever an unmarked enemy dies. Attacks on
+empty slots leave RiP unchanged.
 Defenders always retaliate, even when the attack kills them.
-Revival percentages use the unit's base stats, rounded to the nearest whole
-number with a minimum of 1. A player with an empty army can still raise a
-creature before choosing to end the run. HP and unspent RiP carry into the next
-encounter. Each battle starts with a fresh graveyard.
+Revival percentages use the unit's base stats and current MARKs, rounded to the
+nearest whole number with a minimum of 1. At four MARKs, a card becomes a
+stationary 1/1 Poop Warrior with no active abilities. A player with an empty army
+can still raise a creature before choosing to end the run. HP and unspent RiP
+carry into the next encounter. Each battle starts with a fresh graveyard.
 
-Every unit has a **Shift** pattern, set per unit in `Gameplay/Units/*.tres`:
-Hold, Left, Right, or Bounce. From round 2 on, both rows shift one slot before
-attacks; round 1 fights in the order the player arranged. A unit only moves
-into an empty slot in its own row, otherwise it stays put. Two neighbours
-heading toward each other (for example a Right unit next to a Left unit, or two
-Bounce units facing each other) swap places instead. Left movers resolve
-from the left and right movers from the right, so a line heading the same way
-moves together. Left and Right units stop at the edge; Bounce units start
-heading right and turn around at the edge. If no column has units on both
-sides after shifting, the closest opposing pair trades blows across lanes.
-Enemies start in the middle lanes of the board.
+Birds try to shift one slot left at the start of each round, starting from the
+player's chosen formation. They can enter a vacant slot or swap with a bug or
+movable mammal. Each card can move once per round. Bone Ward keeps its slot.
+Doomed Jackdaw dies when it cannot shift. If no column has units on both sides
+after shifting, the closest opposing pair trades blows across lanes.
 
-Bug, Bird and Mammal cards show their faction and any special ability. Abilities
-resolve before attacks, after any shifts. Bonus HP absorbs damage first. Temporary
-ATK and remaining bonus HP expire at the end of the encounter.
+Cards show their faction and ability. Blocked shift deaths resolve before stat
+bonuses, and stat changes appear above the affected cards.
+Only player-controlled cards can gain stats from the graveyard. The bonus expires
+at the start of each round and is reapplied in full using the current graveyard size.
+Bonus HP absorbs damage first. Temporary ATK and remaining bonus HP expire at
+the end of the encounter.
 
 ## Web export and itch.io deployment
 

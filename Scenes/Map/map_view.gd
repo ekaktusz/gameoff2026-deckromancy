@@ -4,6 +4,7 @@ extends VBoxContainer
 signal fight_requested(encounter: EncounterDefinition)
 signal retry_requested
 
+const CARD_SCENE := preload("res://Scenes/Card/card_2d.tscn")
 const ACTIVE_PATH := Color(0.84, 0.66, 0.41)
 const FUTURE_PATH := Color(0.27, 0.24, 0.21)
 const LANE_HEIGHT := 88.0
@@ -12,18 +13,17 @@ const CLEARED_BORDER := Color(0.35, 0.44, 0.29)
 const LOCKED_BORDER := Color(0.32, 0.28, 0.24)
 const NODE_FILL := Color(0.15, 0.12, 0.10)
 
-var _run_finished: bool = false
 var _route: Array[EncounterDefinition] = []
 var _available: Array[EncounterDefinition] = []
 var _cleared: Array[EncounterDefinition] = []
-var _selected: EncounterDefinition
 var _nodes: Dictionary = {}
 var _stage_count: int = 0
 
 @onready var _title: Label = $Title
 @onready var _graph: Control = $Graph
 @onready var _army: Label = $Army
-@onready var _action: Button = $Action
+@onready var _army_cards: HBoxContainer = $ArmyCards
+@onready var _retry: Button = $Retry
 
 
 func _ready() -> void:
@@ -37,10 +37,10 @@ func display(
 	_route = route
 	_available = available
 	_cleared = run.cleared_encounters
-	_run_finished = run.defeated or available.is_empty()
+	_retry.visible = run.defeated or available.is_empty()
 	if run.defeated:
 		_title.text = "Your army fell"
-	elif _run_finished:
+	elif available.is_empty():
 		_title.text = "The city is yours"
 
 	for index in route.size():
@@ -69,17 +69,24 @@ func display(
 		if cleared:
 			button.add_theme_color_override("font_disabled_color", Color(0.70, 0.82, 0.58))
 			button.tooltip_text = "Cleared"
-		button.pressed.connect(_select.bind(encounter))
+		button.pressed.connect(fight_requested.emit.bind(encounter))
 		_graph.add_child(button)
 		_nodes[encounter] = button
 	_layout_route()
 
-	var counts := [run.army.size(), DeckRun.MAX_UNITS, run.rp, DeckRun.MAX_RP]
-	var roster := PackedStringArray(["Army (%d/%d)  ·  %d/%d RiP" % counts])
+	_army.text = (
+		"Army (%d/%d)  ·  %d/%d RiP" % [run.army.size(), DeckRun.MAX_UNITS, run.rp, DeckRun.MAX_RP]
+	)
+	# ponytail: Reuse the battle cards as read-only army previews.
 	for unit in run.army:
-		roster.append("%s  ·  %d ATK  %d HP" % [unit.title(), unit.attack, unit.hp])
-	_army.text = "\n".join(roster)
-	_select(available[0] if available.size() == 1 else null)
+		var slot := Control.new()
+		slot.custom_minimum_size = Card2D.SIZE + Vector2(0, 44)
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_army_cards.add_child(slot)
+		var card := CARD_SCENE.instantiate() as Card2D
+		card.position = slot.custom_minimum_size / 2.0
+		slot.add_child(card)
+		card.display(unit, Card2D.Look.ALLY)
 
 
 func _stage(encounter: EncounterDefinition, index: int) -> int:
@@ -139,22 +146,5 @@ func _draw_paths() -> void:
 			)
 
 
-func _select(encounter: EncounterDefinition) -> void:
-	_selected = encounter
-	for choice in _available:
-		var button: Button = _nodes[choice]
-		button.modulate = Color(1.0, 0.82, 0.56) if choice == encounter else Color.WHITE
-	_action.disabled = not _run_finished and _selected == null
-	if _run_finished:
-		_action.text = "Start another run"
-	elif _selected == null:
-		_action.text = "Choose your next encounter"
-	else:
-		_action.text = "Enter battle"
-
-
-func _on_action_pressed() -> void:
-	if _run_finished:
-		retry_requested.emit()
-	elif _selected != null:
-		fight_requested.emit(_selected)
+func _on_retry_pressed() -> void:
+	retry_requested.emit()

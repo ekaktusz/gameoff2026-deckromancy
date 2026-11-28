@@ -2,7 +2,7 @@ class_name BattleEvent
 extends RefCounted
 ## An action in the round, in the order the battle screen plays it.
 
-enum Kind { SHIFT, ATTACK, DEATH, RIP, BONUS }
+enum Kind { SHIFT, ATTACK, DEATH, BONUS }
 enum Side { ALLY, ENEMY }
 
 ## A Kind value. Stored as int: Godot does not match the enum's inner name `Side`
@@ -20,10 +20,10 @@ var column: int
 var to_column: int
 ## SHIFT only: this move traded places with a neighbour.
 var swapped: bool = false
-## ATTACK: damage. RIP: requested change. BONUS: the new temporary stat bonus.
+## DEATH only: the unit was sacrificed.
+var sacrificed: bool = false
+## ATTACK: damage. BONUS: the new temporary stat bonus.
 var amount: int
-## RIP only: the first attack on an empty enemy slot uses up its reward.
-var rewards_column: bool = false
 
 
 func _init(

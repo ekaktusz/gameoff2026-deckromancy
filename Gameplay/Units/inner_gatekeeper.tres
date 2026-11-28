@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="UnitDefinition" format=3 uid="uid://cro6cj8jslpxt"]
 
 [ext_resource type="Script" uid="uid://d3hynmklnka5y" path="res://Gameplay/unit_definition.gd" id="1"]
-[ext_resource type="Texture2D" uid="uid://dvhlsfrso8yj5" path="res://assets/frog.png" id="2"]
-[ext_resource type="Texture2D" uid="uid://bu3xs3dyjkaf7" path="res://assets/frog_marked.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/boss_2.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/boss_2_noveny_reteg.png" id="3"]
 
 [resource]
 script = ExtResource("1")
@@ -10,5 +10,4 @@ title = "Inner Gatekeeper"
 attack = 16
 hp = 26
 portrait = ExtResource("2")
-marked_portrait = ExtResource("3")
-portrait_tint = Color(1, 0.72, 0.68, 1)
+mark_overlay = ExtResource("3")

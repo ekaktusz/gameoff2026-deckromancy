@@ -1,11 +1,10 @@
 class_name GraveyardView
 extends Node2D
-## Dead units laid out as a grid of cards; click one to raise it. As the first
+## Dead units laid out as a grid of cards; drag one to the army to raise it. As the first
 ## screen of a run it also shows the raised army in a row below the grid, and
 ## raised cards slide from the grid into that row. The battle screen embeds it
 ## at a smaller scale with the background hidden.
 
-signal raise_requested(unit: UnitState)
 signal unit_dragged(unit: UnitState, point: Vector2)
 signal unit_dropped(unit: UnitState, point: Vector2)
 signal drag_cancelled
@@ -30,6 +29,7 @@ var _cards: Dictionary = {}
 @onready var _background: Sprite2D = $Background
 @onready var _status: Label = $Status
 @onready var _army_label: Label = $ArmyLabel
+@onready var _army_drop_zone: Panel = $ArmyDropZone
 @onready var _card_layer: Node2D = $Cards
 @onready var _continue_button: Button = $Continue
 
@@ -52,12 +52,13 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 		_status.text += "\nNo creatures to raise"
 	elif interactions_enabled and run.can_raise():
 		_status.text += (
-			"\nClick a card to raise it for 1 RiP"
+			"\nDrag a card to your army for 1 RiP"
 			if is_starting_yard
-			else "\nClick or drag to an empty slot to raise for 1 RiP"
+			else "\nDrag to an empty slot for 1 RiP"
 		)
 
 	_army_label.visible = is_starting_yard
+	_army_drop_zone.visible = is_starting_yard
 	_continue_button.visible = is_starting_yard
 	_continue_button.disabled = run.army.is_empty()
 
@@ -84,7 +85,6 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 			_card_layer.add_child(card)
 			card.base_scale = Vector2.ONE * card_scale
 			card.global_position = target
-			card.clicked.connect(_on_card_clicked.bind(unit))
 			card.dragged.connect(func(point: Vector2) -> void: unit_dragged.emit(unit, point))
 			card.dropped.connect(func(point: Vector2) -> void: unit_dropped.emit(unit, point))
 			card.drag_cancelled.connect(drag_cancelled.emit)
@@ -93,8 +93,7 @@ func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = fals
 		elif not card.global_position.is_equal_approx(target):
 			card.move_to(target, MOVE_TIME)
 		card.display(unit, Card2D.Look.DEAD if for_revival else Card2D.Look.ALLY, for_revival)
-		card.clickable = for_revival and interactions_enabled and run.can_raise()
-		card.draggable = card.clickable and not is_starting_yard
+		card.draggable = for_revival and interactions_enabled and run.can_raise()
 		card.hover_enabled = interactions_enabled
 		card.dimmed = for_revival and not run.can_raise()
 
@@ -116,8 +115,10 @@ func _cell(index: int) -> Vector2:
 	return Vector2(cell_size.x * (index % columns), cell_size.y * floori(float(index) / columns))
 
 
-func _on_card_clicked(unit: UnitState) -> void:
-	raise_requested.emit(unit)
+func is_army_drop(point: Vector2) -> bool:
+	return (
+		_army_drop_zone.is_visible_in_tree() and _army_drop_zone.get_global_rect().has_point(point)
+	)
 
 
 func _on_continue_pressed() -> void:

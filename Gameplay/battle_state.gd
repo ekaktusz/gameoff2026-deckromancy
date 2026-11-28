@@ -9,8 +9,6 @@ var allies: Array[UnitState] = []
 var enemies: Array[UnitState] = []
 var graveyard: Array[UnitState] = []
 var round_number: int = 0
-# Empty enemy slots that already paid out RiP this battle.
-var rewarded_columns: Array[int] = []
 ## Units on both rows that changed column in the latest round.
 var last_shift_count: int = 0
 
@@ -44,21 +42,36 @@ func swap_allies(first: int, second: int) -> void:
 	allies[second] = unit
 
 
-## Starts the round and moves both formations. Health and RiP change as the
-## following events play.
+## Starts the round, expires graveyard bonuses, and moves both formations.
 func begin_round() -> Array[BattleEvent]:
 	var events: Array[BattleEvent] = []
 	if run.army.is_empty() or enemies_defeated():
 		return events
 
 	round_number += 1
-	# The player's arrangement fights as set in round 1; units shift from round 2 on.
-	last_shift_count = 0
-	if round_number > 1:
-		last_shift_count = (
-			_shift_row(allies, BattleEvent.Side.ALLY, events)
-			+ _shift_row(enemies, BattleEvent.Side.ENEMY, events)
-		)
+	for unit in run.army:
+		if unit.definition.ability == UnitDefinition.Ability.GRAVEYARD:
+			unit.set_battle_bonus(0)
+	_shift_row(allies, BattleEvent.Side.ALLY, events)
+	_shift_row(enemies, BattleEvent.Side.ENEMY, events)
+	last_shift_count = events.size()
+	return events
+
+
+func plan_shift_deaths(shifts: Array[BattleEvent]) -> Array[BattleEvent]:
+	var events: Array[BattleEvent] = []
+	var moved := shifts.map(func(event: BattleEvent) -> UnitState: return event.unit)
+	for side: int in [BattleEvent.Side.ALLY, BattleEvent.Side.ENEMY]:
+		var row := allies if side == BattleEvent.Side.ALLY else enemies
+		for column in COLUMN_COUNT:
+			var unit := row[column]
+			if (
+				unit != null
+				and unit.definition.ability == UnitDefinition.Ability.DIE_IF_BLOCKED
+				and not unit.is_poop_warrior()
+				and not moved.has(unit)
+			):
+				events.append(BattleEvent.new(BattleEvent.Kind.DEATH, side, unit, column))
 	return events
 
 
@@ -72,36 +85,35 @@ func plan_bonuses(shifts: Array[BattleEvent]) -> Array[BattleEvent]:
 		var marks := 0
 		for unit in row:
 			if unit != null:
-				marks += unit.revivals
+				marks += unit.marks
 		for column in COLUMN_COUNT:
 			var unit := row[column]
-			if unit == null:
+			if unit == null or unit.is_poop_warrior():
 				continue
 			var move: BattleEvent = moves.get(unit)
-			if (
-				unit.definition.ability == UnitDefinition.Ability.DIE_IF_BLOCKED
-				and round_number > 1
-				and move == null
-			):
-				events.append(BattleEvent.new(BattleEvent.Kind.DEATH, side, unit, column))
-				continue
-			var bonus := _round_bonus(unit, row, column, marks, move)
+			var ability := unit.definition.battle_ability(side == BattleEvent.Side.ENEMY)
+			var bonus := _round_bonus(ability, unit, row, column, marks, move)
 			if bonus != unit.battle_bonus:
 				events.append(BattleEvent.new(BattleEvent.Kind.BONUS, side, unit, column, bonus))
 	return events
 
 
 func _round_bonus(
-	unit: UnitState, row: Array[UnitState], column: int, marks: int, move: BattleEvent
+	ability: UnitDefinition.Ability,
+	unit: UnitState,
+	row: Array[UnitState],
+	column: int,
+	marks: int,
+	move: BattleEvent,
 ) -> int:
 	var bonus := 0
-	match unit.definition.ability:
+	match ability:
 		UnitDefinition.Ability.GRAVEYARD:
 			bonus = graveyard.size()
 		UnitDefinition.Ability.ARMY_MARKS:
 			bonus = marks
 		UnitDefinition.Ability.OWN_MARKS:
-			bonus = 4 * unit.revivals
+			bonus = 4 * unit.marks
 		UnitDefinition.Ability.ALLIES_TO_RIGHT:
 			for index in range(column + 1, COLUMN_COUNT):
 				if row[index] != null:
@@ -131,17 +143,8 @@ func plan_attacks() -> Array[BattleEvent]:
 			_plan_duel(column, column, events)
 		elif ally != null:
 			events.append(_attack_event(BattleEvent.Side.ALLY, ally, null, column))
-			if not rewarded_columns.has(column):
-				var reward := BattleEvent.new(
-					BattleEvent.Kind.RIP, BattleEvent.Side.ALLY, null, column, 1
-				)
-				reward.rewards_column = true
-				events.append(reward)
 		elif enemy != null:
 			events.append(_attack_event(BattleEvent.Side.ENEMY, enemy, null, column))
-			events.append(
-				BattleEvent.new(BattleEvent.Kind.RIP, BattleEvent.Side.ENEMY, null, column, -1)
-			)
 	return events
 
 
@@ -158,10 +161,6 @@ func _plan_duel(ally_column: int, enemy_column: int, events: Array[BattleEvent])
 		events.append(
 			BattleEvent.new(BattleEvent.Kind.DEATH, BattleEvent.Side.ENEMY, enemy, enemy_column)
 		)
-		if enemy.revivals == 0:
-			events.append(
-				BattleEvent.new(BattleEvent.Kind.RIP, BattleEvent.Side.ALLY, null, ally_column, 1)
-			)
 	if ally.combat_hp() <= retaliation.amount:
 		events.append(
 			BattleEvent.new(BattleEvent.Kind.DEATH, BattleEvent.Side.ALLY, ally, ally_column)
@@ -184,22 +183,33 @@ func _cross_lane_pair() -> Vector2i:
 	return closest
 
 
-func apply_death(event: BattleEvent) -> void:
+## Returns the actual RiP gained at the time of death.
+func apply_death(event: BattleEvent) -> int:
 	var unit := event.unit
+	var is_ally := event.side == BattleEvent.Side.ALLY
+	var row := allies if is_ally else enemies
+	if row[event.column] != unit:
+		return 0
+	row[event.column] = null
 	unit.hp = 0
 	unit.set_battle_bonus(0)
-	if event.side == BattleEvent.Side.ALLY:
-		allies[event.column] = null
-		run.army.erase(unit)
-	else:
-		enemies[event.column] = null
+	if event.sacrificed:
+		unit.marks += 1
 	graveyard.append(unit)
+	if is_ally:
+		run.army.erase(unit)
+		return 0
+	return run.add_rp(1) if unit.marks == 0 else 0
 
 
 func sacrifice(column: int) -> BattleEvent:
 	if round_number == 0 or not _valid_column(column) or allies[column] == null:
 		return null
-	return BattleEvent.new(BattleEvent.Kind.DEATH, BattleEvent.Side.ALLY, allies[column], column)
+	var event := BattleEvent.new(
+		BattleEvent.Kind.DEATH, BattleEvent.Side.ALLY, allies[column], column
+	)
+	event.sacrificed = true
+	return event
 
 
 func clear_bonuses() -> void:
@@ -211,17 +221,11 @@ func can_raise_at(column: int) -> bool:
 	return round_number > 0 and _valid_column(column) and allies[column] == null and run.can_raise()
 
 
-## Returns the chosen column, or -1 when the unit cannot be raised. Click-to-raise
-## passes no column and takes the first vacancy.
-func try_raise(unit: UnitState, column: int = -1) -> int:
-	if round_number == 0:
-		return -1
-	if column == -1:
-		column = allies.find(null)
+func try_raise(unit: UnitState, column: int) -> bool:
 	if not can_raise_at(column) or not run.try_raise(unit, graveyard):
-		return -1
+		return false
 	allies[column] = unit
-	return column
+	return true
 
 
 func _valid_column(column: int) -> bool:
@@ -245,53 +249,23 @@ func _shift_event(
 	return event
 
 
-## Moves every unit one slot in its shift direction. Bounce units facing the
-## edge turn around first. Two neighbours heading toward each other swap places.
-## Everyone else resolves left movers from the left and right movers from the
-## right, so a line heading the same way moves together, and only enters an
-## empty slot; otherwise it stays put.
-func _shift_row(row: Array[UnitState], side: int, events: Array[BattleEvent]) -> int:
-	_turn_bounce_units_at_edges(row)
-	var handled: Array[UnitState] = []
-	var moves := 0
-
-	for column in COLUMN_COUNT - 1:
-		var left := row[column]
-		var right := row[column + 1]
-		if left == null or right == null or handled.has(left):
+## Resolve left to right so a line of birds can follow into vacated slots.
+func _shift_row(row: Array[UnitState], side: int, events: Array[BattleEvent]) -> void:
+	var displaced: Array[UnitState] = []
+	for column in range(1, COLUMN_COUNT):
+		var bird := row[column]
+		if bird == null or bird.is_poop_warrior() or not bird.definition.shifts_left():
 			continue
-		if left.shift_direction == 1 and right.shift_direction == -1:
-			row[column] = right
-			row[column + 1] = left
-			events.append(_shift_event(side, left, column, column + 1, true))
-			events.append(_shift_event(side, right, column + 1, column, true))
-			handled.append(left)
-			handled.append(right)
-			moves += 2
-
-	for direction: int in [-1, 1]:
-		var columns: Array = range(COLUMN_COUNT)
-		if direction == 1:
-			columns.reverse()
-		for column: int in columns:
-			var unit := row[column]
-			if unit == null or unit.shift_direction != direction or handled.has(unit):
+		var target := row[column - 1]
+		if target != null:
+			if (
+				not target.definition.can_be_displaced()
+				or target.is_poop_warrior()
+				or displaced.has(target)
+			):
 				continue
-			handled.append(unit)
-			var target := column + direction
-			if target >= 0 and target < COLUMN_COUNT and row[target] == null:
-				row[target] = unit
-				row[column] = null
-				events.append(_shift_event(side, unit, column, target))
-				moves += 1
-	return moves
-
-
-func _turn_bounce_units_at_edges(row: Array[UnitState]) -> void:
-	for column: int in [0, COLUMN_COUNT - 1]:
-		var unit := row[column]
-		if unit == null or unit.definition.shift != UnitDefinition.Shift.BOUNCE:
-			continue
-		var target: int = column + unit.shift_direction
-		if target < 0 or target >= COLUMN_COUNT:
-			unit.shift_direction = -unit.shift_direction
+			displaced.append(target)
+			events.append(_shift_event(side, target, column - 1, column, true))
+		row[column - 1] = bird
+		row[column] = target
+		events.append(_shift_event(side, bird, column, column - 1, target != null))

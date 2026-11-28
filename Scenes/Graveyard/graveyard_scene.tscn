@@ -3,6 +3,18 @@
 [ext_resource type="Script" path="res://Scenes/Graveyard/graveyard_view.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/city_00.png" id="2"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_army"]
+bg_color = Color(0.08, 0.07, 0.06, 0.72)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0.7, 0.58, 0.4)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
 [node name="GraveyardScene" type="Node2D"]
 position = Vector2(64, 36)
 script = ExtResource("1")
@@ -14,6 +26,7 @@ scale = Vector2(1.505, 1.507)
 texture = ExtResource("2")
 
 [node name="Title" type="Label" parent="."]
+z_index = 31
 offset_right = 480.0
 offset_bottom = 64.0
 mouse_filter = 2
@@ -23,9 +36,10 @@ theme_override_font_sizes/font_size = 48
 text = "Graveyard"
 
 [node name="Status" type="Label" parent="."]
+z_index = 31
 offset_top = 70.0
 offset_right = 430.0
-offset_bottom = 140.0
+offset_bottom = 150.0
 mouse_filter = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
@@ -34,6 +48,7 @@ autowrap_mode = 2
 
 [node name="ArmyLabel" type="Label" parent="."]
 visible = false
+z_index = 31
 offset_top = 540.0
 offset_right = 480.0
 offset_bottom = 590.0
@@ -42,6 +57,15 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 32
 text = "Your army"
+
+[node name="ArmyDropZone" type="Panel" parent="."]
+visible = false
+offset_left = 52.0
+offset_top = 600.0
+offset_right = 1240.0
+offset_bottom = 890.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_army")
 
 [node name="Cards" type="Node2D" parent="."]
 

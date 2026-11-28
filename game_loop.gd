@@ -13,6 +13,7 @@ var _screen: CanvasItem
 
 @onready var _screen_container: MarginContainer = $Screen
 @onready var _world: Node2D = $World
+@onready var _map_background: TextureRect = $MapBackground
 
 
 func _ready() -> void:
@@ -29,16 +30,25 @@ func _start_run() -> void:
 	var graveyard := GRAVEYARD.instantiate() as GraveyardView
 	_show_screen(graveyard)
 	graveyard.display(_run, _starting_graveyard, true)
-	graveyard.raise_requested.connect(_on_starting_raise_requested.bind(graveyard))
+	graveyard.unit_dropped.connect(_on_starting_unit_dropped.bind(graveyard))
 	graveyard.continue_requested.connect(_show_map)
 
 
-func _on_starting_raise_requested(unit: UnitState, graveyard: GraveyardView) -> void:
-	if _run.try_raise(unit, _starting_graveyard):
-		graveyard.display(_run, _starting_graveyard, true)
+func _on_starting_unit_dropped(unit: UnitState, point: Vector2, graveyard: GraveyardView) -> void:
+	if not graveyard.is_army_drop(point) or not _run.try_raise(unit, _starting_graveyard):
+		graveyard.restore_drag_position(unit)
+		return
+	# ponytail: The starting army fills left to right within the shared drop zone.
+	graveyard.display(_run, _starting_graveyard, true)
 
 
 func _show_map() -> void:
+	var cleared_bosses := 0
+	for encounter in _run.cleared_encounters:
+		cleared_bosses += int(encounter.is_boss)
+	# ponytail: Load the numbered city backgrounds on demand.
+	var background_path := "res://assets/city_%02d.png" % mini(cleared_bosses, 4)
+	_map_background.texture = load(background_path) as Texture2D
 	var map_view := MAP.instantiate() as MapView
 	_show_screen(map_view)
 	map_view.display(_run, encounters, _available_encounters())
@@ -78,6 +88,7 @@ func _show_screen(screen: CanvasItem) -> void:
 		_screen.get_parent().remove_child(_screen)
 		_screen.queue_free()
 	_screen = screen
+	_map_background.visible = screen is MapView
 	if screen is Control:
 		_screen_container.add_child(screen)
 	else:

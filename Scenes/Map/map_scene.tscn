@@ -16,12 +16,15 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Army" type="Label" parent="."]
-theme_override_constants/line_spacing = 8
 
-[node name="Action" type="Button" parent="."]
+[node name="ArmyCards" type="HBoxContainer" parent="."]
+mouse_filter = 2
+theme_override_constants/separation = 36
+
+[node name="Retry" type="Button" parent="."]
+visible = false
 custom_minimum_size = Vector2(244, 52)
 size_flags_horizontal = 0
-disabled = true
-text = "Fight"
+text = "Start another run"
 
-[connection signal="pressed" from="Action" to="." method="_on_action_pressed"]
+[connection signal="pressed" from="Retry" to="." method="_on_retry_pressed"]

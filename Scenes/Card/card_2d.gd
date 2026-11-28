@@ -1,6 +1,6 @@
 class_name Card2D
 extends Node2D
-## A unit card drawn in 2D: portrait, name, shift pattern, ATK and HP badges and
+## A unit card drawn in 2D: portrait, name, abilities, ATK and HP badges and
 ## MARK pips. Positions are the card's centre. The helpers at the bottom return
 ## tweens so the battle screen can chain or await them.
 
@@ -24,7 +24,7 @@ const BORDER_COLORS := {
 const BODY_COLOR := Color(0.13, 0.11, 0.1)
 const ART_COLOR := Color(0.8, 0.76, 0.68)
 const MARKED_TINT := Color(0.72, 0.95, 0.62)
-const POOP_TINT := Color(0.62, 0.48, 0.32)
+const POOP_PORTRAIT := preload("res://assets/poop_warrior.png")
 const DIMMED := Color(0.5, 0.5, 0.5)
 const HIT_FLASH := Color(1.7, 0.5, 0.45)
 const HOVER_SFX := preload("res://assets/sfx/hover.tres")
@@ -39,10 +39,15 @@ var look: Look = Look.ALLY
 var clickable: bool = false:
 	set(value):
 		clickable = value
-		if not value:
+		if not clickable and not draggable:
 			_cancel_pointer()
 		queue_redraw()
-var draggable: bool = false
+var draggable: bool = false:
+	set(value):
+		draggable = value
+		if not draggable and (_dragging or not clickable):
+			_cancel_pointer()
+		queue_redraw()
 var hover_enabled: bool = true:
 	set(value):
 		hover_enabled = value
@@ -74,9 +79,10 @@ var _drag_origin: Vector2
 var _body_style := StyleBoxFlat.new()
 
 @onready var _portrait: Sprite2D = $Portrait
+@onready var _plant_overlay: Sprite2D = $Portrait/PlantOverlay
 @onready var _marks_layer: Node2D = $Marks
 @onready var _name: Label = $Name
-@onready var _shift: Label = $Shift
+@onready var _faction: Label = $Faction
 @onready var _ability: Label = $Ability
 @onready var _attack: Label = $Attack
 @onready var _hp: Label = $HP
@@ -92,44 +98,46 @@ func _ready() -> void:
 
 
 ## Shows a unit. With `for_revival` it previews the unit as it would come back
-## from the graveyard (next MARK, reduced stats, starting shift direction).
+## from the graveyard (next MARK and reduced stats).
 ## Call after the card is in the tree.
 func display(unit_state: UnitState, card_look: Look, for_revival: bool = false) -> void:
 	unit = unit_state
 	look = card_look
-	var stats := Vector2i(unit.combat_attack(), unit.combat_hp())
-	var direction := unit.shift_direction
-	if for_revival:
-		stats = unit.revival_stats()
-		direction = unit.definition.starting_shift_direction()
-	_marks = unit.revivals + int(for_revival)
+	var stats := (
+		unit.revival_stats() if for_revival else Vector2i(unit.combat_attack(), unit.combat_hp())
+	)
+	_marks = unit.marks + int(for_revival)
+	var is_poop := unit.is_poop_warrior(for_revival)
 	_name.text = unit.title(for_revival)
-	_shift.text = unit.shift_label(direction)
-	_ability.text = unit.definition.ability_text()
+	_faction.text = "" if is_poop else UnitDefinition.FACTION_NAMES.get(unit.definition.faction, "")
+	var ability := unit.definition.battle_ability(look == Look.ENEMY)
+	_ability.text = "" if is_poop else UnitDefinition.ABILITY_DESCRIPTIONS.get(ability, "")
 	_attack.text = str(stats.x)
 	_hp.text = str(stats.y)
 	_marks_layer.queue_redraw()
-	_update_portrait()
+	_update_portrait(is_poop)
 	queue_redraw()
 
 
-func _update_portrait() -> void:
+func _update_portrait(is_poop: bool) -> void:
 	var definition := unit.definition
-	var texture := definition.portrait
-	var tint := definition.portrait_tint
-	if _marks > 0:
+	var texture: Texture2D = POOP_PORTRAIT if is_poop else definition.portrait
+	var overlay: Texture2D = null if is_poop else definition.mark_overlay
+	var tint := Color.WHITE if is_poop else definition.portrait_tint
+	_plant_overlay.texture = overlay
+	_plant_overlay.visible = overlay != null and unit.marks > 0
+	if not is_poop and _marks > 0 and overlay == null:
 		if definition.marked_portrait != null:
 			texture = definition.marked_portrait
 		else:
 			tint *= MARKED_TINT
-	if _marks >= 4:
-		tint *= POOP_TINT
 
 	_portrait.visible = texture != null
 	if texture == null:
 		return
 	_portrait.texture = texture
 	_portrait.self_modulate = tint
+	_plant_overlay.self_modulate = tint
 	_portrait.position = ART_RECT.get_center()
 	var fit := minf(ART_RECT.size.x / texture.get_width(), ART_RECT.size.y / texture.get_height())
 	_portrait.scale = Vector2(fit, fit)
@@ -138,7 +146,7 @@ func _update_portrait() -> void:
 func _draw() -> void:
 	var rect := Rect2(-SIZE / 2, SIZE)
 	var border: Color = BORDER_COLORS[look]
-	var highlighted := selected or (clickable and _hovered)
+	var highlighted := selected or ((clickable or draggable) and _hovered)
 	_body_style.border_color = border.lightened(0.45) if highlighted else border
 	_body_style.set_border_width_all(7 if highlighted else 4)
 	draw_style_box(_body_style, rect)
@@ -149,7 +157,7 @@ func _draw() -> void:
 
 
 func _draw_marks() -> void:
-	for mark in mini(_marks, 4):
+	for mark in mini(_marks, UnitState.POOP_MARKS):
 		var pip := ART_RECT.position + Vector2(14, 14 + mark * 19)
 		_marks_layer.draw_circle(pip, 8, Color(0.1, 0.1, 0.1))
 		_marks_layer.draw_circle(pip, 5.5, Color(0.65, 1.0, 0.36))
@@ -176,7 +184,7 @@ func _set_hovered(value: bool, immediate: bool = false) -> void:
 		if _pop_tween != null and _pop_tween.is_running():
 			_pop_tween.kill()
 		z_index = HOVER_Z
-		if clickable:
+		if clickable or draggable:
 			SoundManager.play_sfx(HOVER_SFX)
 	elif z_index == HOVER_Z:
 		z_index = 0
@@ -194,7 +202,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		button == null
 		or button.button_index != MOUSE_BUTTON_LEFT
 		or not button.pressed
-		or not clickable
+		or not (clickable or draggable)
 		or not is_visible_in_tree()
 	):
 		return
@@ -233,7 +241,7 @@ func _input(event: InputEvent) -> void:
 		z_index = 0
 		global_position = _drag_origin + point - _press_position
 		dropped.emit(point)
-	elif _contains_point(point):
+	elif clickable and _contains_point(point):
 		SoundManager.play_sfx(SELECT_SFX)
 		clicked.emit()
 

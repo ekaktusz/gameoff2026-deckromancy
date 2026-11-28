@@ -19,6 +19,13 @@
 [ext_resource type="Resource" path="res://Gameplay/Units/rook_captain.tres" id="16"]
 [ext_resource type="Resource" path="res://Gameplay/Units/doomed_jackdaw.tres" id="17"]
 [ext_resource type="Resource" path="res://Gameplay/Units/gutter_ram.tres" id="18"]
+[ext_resource type="Resource" path="res://Gameplay/Units/darius.tres" id="19"]
+
+[sub_resource type="Resource" id="Unit_test_99"]
+script = ExtResource("2")
+title = "Test Unit"
+attack = 99
+hp = 99
 
 [sub_resource type="Resource" id="Encounter_streets"]
 script = ExtResource("3")
@@ -195,6 +202,14 @@ title = "Citadel lord"
 enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("6"), ExtResource("12"), ExtResource("6"), ExtResource("4")])
 map_stage = 12
 is_boss = true
+next_lanes = Array[int]([0])
+
+[sub_resource type="Resource" id="Encounter_darius"]
+script = ExtResource("3")
+title = "Darius"
+enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("19"), ExtResource("16")])
+map_stage = 13
+is_boss = true
 
 [sub_resource type="Theme" id="Theme_prototype"]
 default_font_size = 26
@@ -209,8 +224,8 @@ grow_vertical = 2
 mouse_filter = 2
 theme = SubResource("Theme_prototype")
 script = ExtResource("1")
-starting_units = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5"), ExtResource("6")])
-encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_aqueduct"), SubResource("Encounter_burial"), SubResource("Encounter_cistern"), SubResource("Encounter_market"), SubResource("Encounter_ossuary"), SubResource("Encounter_gatekeeper"), SubResource("Encounter_inner_streets"), SubResource("Encounter_roofs"), SubResource("Encounter_barracks"), SubResource("Encounter_molting"), SubResource("Encounter_aviary"), SubResource("Encounter_procession"), SubResource("Encounter_reliquary"), SubResource("Encounter_inner_gatekeeper"), SubResource("Encounter_spire"), SubResource("Encounter_underkeep"), SubResource("Encounter_rookery"), SubResource("Encounter_parade"), SubResource("Encounter_hatchery"), SubResource("Encounter_citadel_streets"), SubResource("Encounter_well"), SubResource("Encounter_citadel_lord")])
+starting_units = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5"), ExtResource("6"), SubResource("Unit_test_99")])
+encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_aqueduct"), SubResource("Encounter_burial"), SubResource("Encounter_cistern"), SubResource("Encounter_market"), SubResource("Encounter_ossuary"), SubResource("Encounter_gatekeeper"), SubResource("Encounter_inner_streets"), SubResource("Encounter_roofs"), SubResource("Encounter_barracks"), SubResource("Encounter_molting"), SubResource("Encounter_aviary"), SubResource("Encounter_procession"), SubResource("Encounter_reliquary"), SubResource("Encounter_inner_gatekeeper"), SubResource("Encounter_spire"), SubResource("Encounter_underkeep"), SubResource("Encounter_rookery"), SubResource("Encounter_parade"), SubResource("Encounter_hatchery"), SubResource("Encounter_citadel_streets"), SubResource("Encounter_well"), SubResource("Encounter_citadel_lord"), SubResource("Encounter_darius")])
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -221,6 +236,19 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.10, 0.085, 0.075, 1)
+
+[node name="MapBackground" type="TextureRect" parent="."]
+visible = false
+self_modulate = Color(0.55, 0.55, 0.55, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Screen" type="MarginContainer" parent="."]
 layout_mode = 1
