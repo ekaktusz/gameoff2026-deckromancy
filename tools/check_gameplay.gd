@@ -454,7 +454,7 @@ func _check_abilities() -> void:
 	for event in battle.plan_bonuses(shifts):
 		event.unit.set_battle_bonus(event.amount)
 	_expect(run.army[0].battle_bonus == 1, "Silt Guard counts graveyard cards")
-	_expect(run.army[1].battle_bonus == 3, "Shell Mender counts MARKs on its side only")
+	_expect(run.army[1].battle_bonus == 2, "Shell Mender counts only its allies' MARKs")
 	_expect(run.army[2].battle_bonus == 8, "Carapace Hexer gains four per own MARK")
 	_expect(ram.battle_bonus == 0, "Gutter Ram skips growth in a round when it moves")
 
