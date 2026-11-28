@@ -122,7 +122,7 @@ func _round_bonus(
 		UnitDefinition.Ability.GRAVEYARD:
 			bonus = graveyard.size()
 		UnitDefinition.Ability.ARMY_MARKS:
-			bonus = marks
+			bonus = marks - unit.marks
 		UnitDefinition.Ability.OWN_MARKS:
 			bonus = 4 * unit.marks
 		UnitDefinition.Ability.ALLIES_TO_RIGHT:

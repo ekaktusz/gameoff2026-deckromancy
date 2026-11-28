@@ -22,7 +22,7 @@ const FACTION_NAMES := {
 }
 const ABILITY_DESCRIPTIONS := {
 	Ability.GRAVEYARD: "Base +1/+1 per graveyard card",
-	Ability.ARMY_MARKS: "+1/+1 per MARK on its side",
+	Ability.ARMY_MARKS: "+1/+1 per MARK on its allies",
 	Ability.OWN_MARKS: "+4/+4 per MARK on this card",
 	Ability.ALLIES_TO_RIGHT: "Shifts left. +1/+1 per ally to its right",
 	Ability.DIE_IF_BLOCKED: "Shifts left, hops a still ally, dies if blocked",
