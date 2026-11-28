@@ -384,7 +384,16 @@ func _check_card_labels(card: Node2D) -> void:
 func _check_card_frames(card: Node2D, portrait: Sprite2D) -> void:
 	var backing := card.get_node("Backing") as Sprite2D
 	var frame := card.get_node("Frame") as Sprite2D
-	_expect(backing.material == null and frame.material == null, "Card artwork keeps its colors")
+	var material := backing.material as ShaderMaterial
+	var gradient := load("res://assets/cards/card_gradient.tres") as GradientTexture1D
+	_expect(
+		(
+			material != null
+			and frame.material == material
+			and material.get_shader_parameter("gradient_map") == gradient
+		),
+		"Backing and frame share the card gradient"
+	)
 	_expect(
 		backing.get_index() < portrait.get_index() and portrait.get_index() < frame.get_index(),
 		"Layers must draw backing, portrait, then frame"
