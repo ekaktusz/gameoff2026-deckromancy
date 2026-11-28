@@ -17,6 +17,12 @@ shader_parameter/gradient_map = ExtResource("4")
 [node name="Card2D" type="Node2D" unique_id=1557815633]
 script = ExtResource("1")
 
+[node name="Shadow" type="Sprite2D" parent="."]
+self_modulate = Color(0, 0, 0, 0.3)
+position = Vector2(5, 7)
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("2")
+
 [node name="Backing" type="Sprite2D" parent="." unique_id=1985605000]
 material = SubResource("ShaderMaterial_card_gradient")
 scale = Vector2(0.3, 0.3)

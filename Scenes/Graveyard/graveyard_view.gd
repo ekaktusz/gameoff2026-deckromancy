@@ -24,6 +24,7 @@ var interactions_enabled: bool = true
 var _cards: Dictionary = {}
 
 @onready var _background: Sprite2D = $Background
+@onready var _rip: Label = $RiP
 @onready var _status: Label = $Status
 @onready var _army_label: Label = $ArmyLabel
 @onready var _army_slots: SlotRow = $ArmySlots
@@ -43,7 +44,9 @@ func _ready() -> void:
 
 
 func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = false) -> void:
+	_rip.visible = is_starting_yard
 	if is_starting_yard:
+		_rip.text = "RiP  %d/%d" % [run.rp, DeckRun.MAX_RP]
 		_status.text = (
 			"%d/%d starting cards\nDrag cards into your army"
 			% [run.army.size(), DeckRun.STARTING_ARMY_SIZE]

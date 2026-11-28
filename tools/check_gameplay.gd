@@ -4,6 +4,7 @@ extends SceneTree
 const DEFAULT_GRADIENT := preload("res://assets/units/unit_gradient.tres")
 const BATTLE_TEXTURE := preload("res://assets/backgrounds/battle_bg.png")
 const BONE_WARD := preload("res://Gameplay/Units/bone_ward.tres")
+const BUTTON_TEXTURE := preload("res://assets/ui/button.png")
 
 var _failed := false
 
@@ -13,6 +14,14 @@ func _initialize() -> void:
 
 
 func _check_gameplay() -> void:
+	var menu := load("res://UI/Menus/MainMenu/main_menu.tscn").instantiate() as Control
+	root.add_child(menu)
+	_check_button_art(menu)
+	var start := menu.get_node("VBoxContainer/StartButton") as Button
+	var exit := menu.get_node("VBoxContainer/ExitButton") as Button
+	_expect(start.custom_minimum_size == Vector2(408, 100), "Match the Options button size")
+	_expect(exit.custom_minimum_size == start.custom_minimum_size, "Match Start and Exit sizes")
+	menu.free()
 	_check_portraits()
 	_check_abilities()
 	_check_deaths()
@@ -56,11 +65,14 @@ func _check_gameplay() -> void:
 	_dismiss_story(game)
 	_dismiss_story(game)
 	var yard = game.get_node("World/GraveyardScene")
+	_check_button_art(game)
 	var offer: Dictionary[UnitDefinition, UnitState] = {}
 	for unit: UnitState in game.get("_starting_graveyard"):
 		offer[unit.definition] = unit
 	var starters: Array[UnitState] = [offer[hound], offer[rook]]
 	var continue_button := yard.get_node("Continue") as Button
+	var yard_rip := yard.get_node("RiP") as Label
+	_expect(yard_rip.is_visible_in_tree() and yard_rip.text == "RiP  3/5", "Show the starting RiP")
 	var first_card: Vector2 = yard.card_global_position(starters[0])
 	var run: DeckRun = game.get("_run")
 	_pointer(first_card, first_card)
@@ -83,10 +95,12 @@ func _check_gameplay() -> void:
 	_pointer(yard.card_global_position(offer[spare]), army_slots.slot_position(4))
 	_expect(run.army.size() == 3 and not run.army.has(offer[spare]), "Pick only three starters")
 	_expect(run.rp == 0, "Each starting card costs one RiP")
+	_expect(yard_rip.text == "RiP  0/5", "Update cemetery RiP after drafting")
 	# Give the combat fixture enough RiP to exercise three more revivals.
 	run.add_rp(1)
 	continue_button.pressed.emit()
 	var map := game.get_node("Screen/MapScene") as Control
+	_check_button_art(map)
 	_expect(map.get_node("ArmyCards").get_child_count() == 3, "Map must show the army's cards")
 	_expect(not map.get_node("Retry").visible, "There should be no extra start button")
 	var button := map.get_node("Graph").get_child(0) as Button
@@ -98,13 +112,17 @@ func _check_gameplay() -> void:
 	_expect(not game.get_node("MapBackground").visible, "Map background must hide in battle")
 	_expect(_story_text(game).begins_with("Every creature"), "Show the first fight tutorial")
 	var battle_view: Node = game.get_node("World/BattleGround")
+	_check_button_art(battle_view)
 	var battle: BattleState = battle_view.get("_battle")
 	var action := battle_view.get_node("HUD/Action") as Button
 	var yard_title := battle_view.get_node("Graveyard/Title") as Label
-	var yard_status := battle_view.get_node("Graveyard/Status") as Label
+	var battle_yard_status := battle_view.get_node("Graveyard/Status") as Label
 	_expect(yard_title.is_visible_in_tree(), "Show the graveyard heading before the first round")
 	_expect(
-		yard_status.is_visible_in_tree() and yard_status.text.contains("No creatures to raise"),
+		(
+			battle_yard_status.is_visible_in_tree()
+			and battle_yard_status.text.contains("No creatures to raise")
+		),
 		"Show the empty graveyard status before the first round"
 	)
 	var battle_art := battle_view.get_node("Background") as Sprite2D
@@ -184,6 +202,25 @@ func _check_gameplay() -> void:
 	quit(int(_failed))
 
 
+func _check_button_art(screen: Node) -> void:
+	for button: Button in screen.find_children("*", "Button", true, false):
+		for state in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
+			var style := button.get_theme_stylebox(state) as StyleBoxTexture
+			_expect(
+				style != null and style.texture == BUTTON_TEXTURE,
+				"%s uses the shared button art in %s state" % [button.name, state]
+			)
+		var normal := button.get_theme_stylebox("normal") as StyleBoxTexture
+		var hover := button.get_theme_stylebox("hover") as StyleBoxTexture
+		_expect(
+			(
+				normal.modulate_color == Color.WHITE
+				and hover.modulate_color.b < hover.modulate_color.r
+			),
+			"Show gray art normally and warm art on hover"
+		)
+
+
 func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 	var yard = view.get_node("Graveyard")
 	_expect(not yard.get_node("Background/Plants").is_visible_in_tree(), "Hide plants in battle")
@@ -221,7 +258,34 @@ func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 	var art_rect := background.transform * background.get_rect()
 	_expect(viewport.encloses(art_rect), "Show the entire battle background")
 	_expect(art_rect.get_center().is_equal_approx(viewport.get_center()), "Center the battle art")
-	await _wait_for_action(next_view.get_node("HUD/Action") as Button)
+	var next_action := next_view.get_node("HUD/Action") as Button
+	await _wait_for_action(next_action)
+	var carried := battle.graveyard.front() as UnitState
+	var recruit_column := battle.allies.find(recruit)
+	var next_slots = next_view.get_node("AllySlots")
+	var recruit_slot: Vector2 = next_slots.slot_position(recruit_column)
+	var marks_before := recruit.marks
+	battle.run.add_rp(1)
+	_pointer(recruit_slot, recruit_slot)
+	var sacrifice := next_view.get_node("HUD/Sacrifice") as Button
+	_expect(sacrifice.visible and not sacrifice.disabled, "Enable sacrifice before the first round")
+	sacrifice.pressed.emit()
+	await _wait_for_action(next_action)
+	_expect(
+		battle.graveyard.has(recruit) and recruit.marks == marks_before + 1,
+		"Sacrificing before the first round adds the unit and a MARK"
+	)
+	var next_yard = next_view.get_node("Graveyard")
+	_pointer(next_yard.card_global_position(carried), recruit_slot)
+	await _wait_for_action(next_action)
+	_expect(
+		(
+			battle.round_number == 0
+			and battle.allies[recruit_column] == carried
+			and battle.run.rp == 0
+		),
+		"Raise a carried graveyard card for one RiP before the first round"
+	)
 
 
 func _card_gradient(card: Node) -> GradientTexture1D:
@@ -243,11 +307,26 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	var game = scene.instantiate()
 	root.add_child(game)
 	root.get_node("MusicPlayer/AudioStreamPlayer").stop()
+	var ui := game.get_node("UI")
+	var pause_menu := ui.get_node("PauseMenu")
+	ui.open_menu(pause_menu)
+	await process_frame
+	for button: Button in pause_menu.find_children("*", "Button", true, false):
+		_expect(button.size.x >= 400.0 and button.size.y >= 100.0, "Enlarge the Options buttons")
+	var settings := ui.get_node("SettingsMenu")
+	ui.open_menu(settings)
+	await process_frame
+	for slider: HSlider in settings.find_children("*", "HSlider", true, false):
+		_expect(slider.size.x >= 400.0 and slider.size.y >= 36.0, "Enlarge the volume sliders")
+	var back := settings.find_child("BackButton") as Button
+	_expect(back.size == Vector2(408, 100), "Match the Options Back button size")
+	ui.go_back()
+	ui.go_back()
 	await process_frame
 	var background := game.get_node("MapBackground") as TextureRect
 	var city_start := load("res://assets/backgrounds/city_00.png") as Texture2D
 	_expect(background.visible and background.texture == city_start, "Intro must show city 00")
-	_expect(background.self_modulate == Color.WHITE, "Show the intro at full brightness")
+	_expect(background.modulate == Color.WHITE, "Show the intro at full brightness")
 	var intro := _story_text(game)
 	_expect(intro.begins_with("This City"), "Show intro after Start")
 	var copy := game.get_node("StoryBox/Margin/Panel/Content/Copy") as RichTextLabel
@@ -266,7 +345,7 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	)
 	_expect(not background.visible, "City background must be hidden in the starting graveyard")
 	var yard_art := game.get_node("World/GraveyardScene/Background") as Sprite2D
-	_expect(yard_art.self_modulate == Color.WHITE, "Show the cemetery story at full brightness")
+	_expect(yard_art.modulate == Color.WHITE, "Show both cemetery layers at full brightness")
 	var plants := yard_art.get_node("Plants") as Sprite2D
 	var graveyard := load("res://assets/backgrounds/temeto_00.png") as Texture2D
 	var plant_art := load("res://assets/backgrounds/temeto_00_noveny.png") as Texture2D
@@ -279,7 +358,7 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	)
 	_expect(not game.get_node("World/GraveyardScene/Continue").visible, "Story comes before draft")
 	_dismiss_story(game)
-	_expect(yard_art.self_modulate != Color.WHITE, "Restore the normal cemetery background")
+	_expect(yard_art.modulate != Color.WHITE, "Restore the shared dimming for both cemetery layers")
 	_expect(
 		game.get_node("World/GraveyardScene/Continue").visible, "Dismiss story to start drafting"
 	)
@@ -291,7 +370,14 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	_expect(offered_definitions.size() == 4, "Offer four starters per run")
 	game._show_map()
 	_expect(background.visible and background.texture == city_start, "Map must begin with city 00")
-	_expect(background.self_modulate != Color.WHITE, "Restore the normal map background")
+	_expect(background.modulate != Color.WHITE, "Restore the normal map background")
+	await process_frame
+	var graph := game.get_node("Screen/MapScene/Graph") as Control
+	for button: Button in graph.get_children():
+		var title := button.get_node("Title") as Label
+		_expect(title.text == button.accessibility_name, "Keep the full encounter title")
+		_expect(title.get_line_count() <= 2, "Fit %s into two lines" % title.text)
+		_expect(title.size.x <= button.size.x - 29.0, "Keep map text inside the button frame")
 	var stage := 0
 	var boss_openings := [
 		"I knew I was on", "I kept pushing", "I knew I was getting", "I was exhausted"
@@ -303,7 +389,7 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 		_expect(background.texture == texture, "Wrong map background after %s" % encounter.title)
 		_expect(game.get_node("StoryBox").visible == encounter.is_boss, "Story follows each boss")
 		if encounter.is_boss:
-			_expect(background.self_modulate == Color.WHITE, "Show boss stories at full brightness")
+			_expect(background.modulate == Color.WHITE, "Show boss stories at full brightness")
 			_expect(_story_text(game).begins_with(boss_openings[stage - 1]), "Match boss story")
 			_expect(
 				not game.has_node("Screen/MapScene"), "Show victory art before returning to map"
@@ -311,6 +397,18 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 			_dismiss_story(game)
 	_expect(stage == 4, "Darius must unlock city 04")
 	game.get_node("Screen/MapScene").retry_requested.emit()
+	var previous_run: DeckRun = game.get("_run")
+	previous_run.rp = 0
+	ui.open_menu(pause_menu)
+	var restart := pause_menu.find_child("RestartButton") as Button
+	restart.pressed.emit()
+	await ui.restart_requested
+	var restarted_run: DeckRun = game.get("_run")
+	_expect(
+		not paused and restarted_run != previous_run and restarted_run.rp == DeckRun.STARTING_RP,
+		"Options restarts the run and unpauses the game"
+	)
+	_expect(_story_text(game).begins_with("I got some"), "Restart from the cemetery")
 	_dismiss_story(game)
 	game._show_map()
 	_expect(background.texture == city_start, "A new run must restore city 00")

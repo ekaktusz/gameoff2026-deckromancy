@@ -7,9 +7,10 @@ the four random starting cards into slots under **Your army**, then click a
 location to enter its fight. The chosen slots set the opening formation.
 The city's thirteen stages end with Darius, beyond the Citadel Lord. Before each
 fight, drag cards to rearrange them.
-Between rounds and after the last enemy falls, drag a graveyard card into an
-empty ally slot to raise it. Fallen allies and enemies both go to the graveyard.
-To sacrifice an ally, select it between rounds and press **Sacrifice**. It gains
+Before the first round, between rounds, and after the last enemy falls, drag a
+graveyard card into an empty ally slot to raise it. Fallen allies and enemies
+both go to the graveyard.
+To sacrifice an ally, select it and press **Sacrifice**. It gains
 a MARK as it enters the graveyard. Open `game_loop.tscn` and press **F6** to start
 at the graveyard while iterating.
 

@@ -2,6 +2,7 @@ extends Control
 
 signal settings_menu_requested
 signal credits_menu_requested
+signal restart_requested
 
 
 func _on_settings_button_pressed() -> void:
@@ -12,6 +13,11 @@ func _on_settings_button_pressed() -> void:
 func _on_quit_button_pressed() -> void:
 	await SoundManager.play_click_sound().finished
 	get_tree().quit()
+
+
+func _on_restart_button_pressed() -> void:
+	await SoundManager.play_click_sound().finished
+	restart_requested.emit()
 
 
 func _on_credits_pressed() -> void:

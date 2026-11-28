@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+signal restart_requested
+
 var menu_stack = []
 
 @onready var pause_menu = $PauseMenu
@@ -47,3 +49,8 @@ func _on_pause_menu_credits_menu_requested() -> void:
 
 func _on_pause_menu_settings_menu_requested() -> void:
 	open_menu(settings_menu)
+
+
+func _on_pause_menu_restart_requested() -> void:
+	go_back()
+	restart_requested.emit()

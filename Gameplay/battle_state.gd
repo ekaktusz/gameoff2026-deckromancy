@@ -220,7 +220,7 @@ func apply_death(event: BattleEvent) -> int:
 
 
 func sacrifice(column: int) -> BattleEvent:
-	if round_number == 0 or not _valid_column(column) or allies[column] == null:
+	if not _valid_column(column) or allies[column] == null:
 		return null
 	var event := BattleEvent.new(
 		BattleEvent.Kind.DEATH, BattleEvent.Side.ALLY, allies[column], column
@@ -235,7 +235,7 @@ func clear_bonuses() -> void:
 
 
 func can_raise_at(column: int) -> bool:
-	return round_number > 0 and _valid_column(column) and allies[column] == null and run.can_raise()
+	return _valid_column(column) and allies[column] == null and run.can_raise()
 
 
 func try_raise(unit: UnitState, column: int) -> bool:
