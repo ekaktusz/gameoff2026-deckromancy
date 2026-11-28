@@ -3,9 +3,10 @@
 ## Play the prototype
 
 Open the project in Godot and press **F5**, then choose **Start**. Drag at least
-one graveyard card into **Your army**, then click a location to enter its fight.
+one graveyard card into a slot under **Your army**, then click a location to
+enter its fight. The chosen slots set the opening formation.
 The city's thirteen stages end with Darius, beyond the Citadel Lord. Before each
-fight, drag cards to rearrange them or click two slots to swap them.
+fight, drag cards to rearrange them.
 Between rounds and after the last enemy falls, drag a graveyard card into an
 empty ally slot to raise it. Fallen allies and enemies both go to the graveyard.
 To sacrifice an ally, select it between rounds and press **Sacrifice**. It gains

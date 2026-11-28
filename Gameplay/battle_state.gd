@@ -20,8 +20,13 @@ func _init(
 	encounter = battle_encounter
 	allies.resize(COLUMN_COUNT)
 	enemies.resize(COLUMN_COUNT)
-	for column in run.army.size():
-		allies[column] = run.army[column]
+	if run.cleared_encounters.is_empty():
+		for unit in run.army:
+			if run.starting_slots.has(unit):
+				allies[run.starting_slots[unit]] = unit
+	for unit in run.army:
+		if not allies.has(unit):
+			allies[allies.find(null)] = unit
 	var lineup := run.enemy_lineup(encounter, enemy_pool)
 	var enemy_count := mini(lineup.size(), COLUMN_COUNT)
 	var first_column := floori((COLUMN_COUNT - enemy_count) / 2.0)

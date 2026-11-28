@@ -31,11 +31,15 @@ func _check_gameplay() -> void:
 	encounter.enemies.assign([enemy, enemy])
 	encounter.portrait_gradient = GradientTexture1D.new()
 	encounter.portrait_gradient.gradient = Gradient.new()
+	encounter.portrait_gradient.gradient.set_color(0, Color.DARK_GREEN)
+	encounter.portrait_gradient.gradient.set_color(1, Color.GOLD)
 	var next_encounter := EncounterDefinition.new()
 	next_encounter.title = "Next regression fight"
 	next_encounter.enemies.append(enemy)
 	next_encounter.portrait_gradient = GradientTexture1D.new()
 	next_encounter.portrait_gradient.gradient = Gradient.new()
+	next_encounter.portrait_gradient.gradient.set_color(0, Color.AQUAMARINE)
+	next_encounter.portrait_gradient.gradient.set_color(1, Color.BLACK)
 	game.encounters.assign([encounter, next_encounter])
 	var rook := load("res://Gameplay/Units/rook_captain.tres") as UnitDefinition
 	var hound := load("res://Gameplay/Units/grave_hound.tres") as UnitDefinition
@@ -48,9 +52,18 @@ func _check_gameplay() -> void:
 	var run: DeckRun = game.get("_run")
 	_pointer(first_card, first_card)
 	_expect(run.army.is_empty(), "Clicking a starting card must not raise it")
-	var drop_zone := yard.get_node("ArmyDropZone") as Panel
-	for unit in starters:
-		_pointer(yard.card_global_position(unit), drop_zone.get_global_rect().get_center())
+	var army_slots = yard.get_node("ArmySlots")
+	_pointer(yard.card_global_position(starters[1]), army_slots.slot_position(1))
+	_pointer(yard.card_global_position(starters[0]), army_slots.slot_position(1))
+	_expect(run.army.size() == 1, "An occupied starting slot must reject a drop")
+	_pointer(yard.card_global_position(starters[0]), army_slots.slot_position(0))
+	_pointer(army_slots.slot_position(1), army_slots.slot_position(3))
+	_expect(run.starting_slots[starters[1]] == 3, "A raised card can move to an empty slot")
+	_pointer(army_slots.slot_position(3), army_slots.slot_position(0))
+	_expect(run.starting_slots[starters[0]] == 3, "Raised cards can swap starting slots")
+	_pointer(army_slots.slot_position(0), army_slots.slot_position(3))
+	_pointer(army_slots.slot_position(3), army_slots.slot_position(1))
+	_expect(run.rp == 1, "Rearranging starting slots must not spend RiP")
 	var guard := load("res://Gameplay/Units/silt_guard.tres") as UnitDefinition
 	run.army.append(UnitState.new(guard))
 	yard.continue_requested.emit()
@@ -82,7 +95,16 @@ func _check_gameplay() -> void:
 	)
 	Engine.time_scale = 8.0
 	await _wait_for_action(action)
-	await battle_view._swap_slots(2, 4)
+	_expect(battle.allies[1] == starters[1], "The first battle honors the chosen starting slots")
+	var ally_slots = battle_view.get_node("AllySlots")
+	var source: Vector2 = ally_slots.slot_position(2)
+	var destination: Vector2 = ally_slots.slot_position(4)
+	_pointer(source, source)
+	_pointer(destination, destination)
+	_expect(battle.allies[4] == null, "Clicking slots cannot swap cards")
+	_pointer(source, destination)
+	await _wait_for_action(action)
+	_expect(battle.allies[4] != null, "Dragging to an open slot moves the card")
 	battle.graveyard.append(UnitState.new(UnitDefinition.new()))
 	action.pressed.emit()
 	await _wait_for_action(action)
@@ -121,6 +143,7 @@ func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 	var previews := game.get_node("Screen/MapScene/ArmyCards")
 	var preview := previews.get_child(previews.get_child_count() - 1).get_child(0)
 	_expect(_card_gradient(preview) == recruit.portrait_gradient, "Map shows the recruited palette")
+	_check_stat_color(preview, Color.GOLD)
 	game.get_node("Screen/MapScene/Graph").get_child(1).pressed.emit()
 	var next_view := game.get_node("World/BattleGround") as Node2D
 	var battle: BattleState = next_view.get("_battle")
@@ -132,6 +155,8 @@ func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 		_card_gradient(cards[battle.enemies[2]]) == battle.encounter.portrait_gradient,
 		"New enemies use the next encounter's gradient"
 	)
+	_check_stat_color(cards[recruit], Color.GOLD)
+	_check_stat_color(cards[battle.enemies[2]], Color.AQUAMARINE)
 	var background := next_view.get_node("Background") as Sprite2D
 	var viewport := next_view.get_viewport_rect()
 	_expect(background.position.x < before.x and background.position.y > before.y, "City crop pans")
@@ -144,6 +169,16 @@ func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 func _card_gradient(card: Node) -> GradientTexture1D:
 	var portrait := card.get_node("Portrait") as Sprite2D
 	return (portrait.material as ShaderMaterial).get_shader_parameter("gradient_map")
+
+
+func _check_stat_color(card: Node, expected: Color) -> void:
+	card.dimmed = true
+	_expect(card.modulate == Color.WHITE, "Dimming must not tint the whole card")
+	for name in ["Attack", "HP"]:
+		var label := card.get_node(name) as Label
+		_expect(label.get_theme_color("font_color") == expected, "%s uses the card palette" % name)
+		_expect(label.modulate == Color.WHITE, "%s stays bright on a dimmed card" % name)
+	card.dimmed = false
 
 
 func _check_map_backgrounds(scene: PackedScene) -> void:
@@ -262,6 +297,7 @@ func _check_portraits() -> void:
 	var scene := load("res://Scenes/Card/card_2d.tscn") as PackedScene
 	var card = scene.instantiate()
 	root.add_child(card)
+	_check_stat_color(card, DEFAULT_GRADIENT.gradient.get_color(1))
 	var title := card.get_node("Name") as Label
 	var font := load("res://assets/fonts/HoldMoney-Regular.ttf") as Font
 	_expect(font != null and title.get_theme_font("font") == font, "Cards must use Hold Money")
@@ -366,11 +402,9 @@ func _check_card_frames(card: Node2D, portrait: Sprite2D) -> void:
 	card.display(unit, card_look, true)
 	var broken_3 := load("res://assets/cards/card bg own transparent middle broken 3.png")
 	_expect(frame.texture == broken_3, "Revival preview must show the upcoming MARK frame")
-	card.selected = true
 	card._set_hovered(true, true)
-	_expect(frame.self_modulate == Color.WHITE, "Selection and hover must preserve frame colors")
+	_expect(frame.self_modulate == Color.WHITE, "Hover must preserve frame colors")
 	card._set_hovered(false, true)
-	card.selected = false
 
 
 func _check_abilities() -> void:

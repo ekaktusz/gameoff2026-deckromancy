@@ -31,7 +31,7 @@ hp = 99
 
 [sub_resource type="Gradient" id="Gradient_streets"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.0596, 0.2212, 0.1204, 1, 0.2208, 0.6753, 0.4213, 1, 0.6846, 0.9146, 0.8205, 1)
+colors = PackedColorArray(0.2212, 0.1162, 0.0596, 1.0000, 0.6753, 0.4102, 0.2208, 1.0000, 0.9146, 0.7958, 0.6846, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_streets"]
 resource_name = "Lower streets"
@@ -47,7 +47,7 @@ portrait_gradient = SubResource("Palette_streets")
 
 [sub_resource type="Gradient" id="Gradient_aqueduct"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.1757, 0.1727, 0.0779, 1, 0.6036, 0.4861, 0.2015, 1, 0.9198, 0.9205, 0.7599, 1)
+colors = PackedColorArray(0.1757, 0.1398, 0.0779, 1.0000, 0.6036, 0.4830, 0.2015, 1.0000, 0.9205, 0.8830, 0.7599, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_aqueduct"]
 resource_name = "Old aqueduct"
@@ -64,7 +64,7 @@ portrait_gradient = SubResource("Palette_aqueduct")
 
 [sub_resource type="Gradient" id="Gradient_burial"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.0456, 0.1378, 0.1064, 1, 0.3605, 0.7944, 0.6215, 1, 0.6411, 0.9445, 0.8718, 1)
+colors = PackedColorArray(0.0456, 0.0871, 0.1378, 1.0000, 0.3605, 0.5268, 0.7944, 1.0000, 0.6411, 0.7372, 0.9445, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_burial"]
 resource_name = "Burial row"
@@ -114,7 +114,7 @@ portrait_gradient = SubResource("Palette_market")
 
 [sub_resource type="Gradient" id="Gradient_ossuary"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.0917, 0.1950, 0.1812, 1, 0.1508, 0.7982, 0.7147, 1, 0.7140, 0.9033, 0.8153, 1)
+colors = PackedColorArray(0.1571, 0.0917, 0.1950, 1.0000, 0.6040, 0.1508, 0.7982, 1.0000, 0.8591, 0.7140, 0.9033, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_ossuary"]
 resource_name = "Ossuary"
@@ -148,7 +148,7 @@ portrait_gradient = SubResource("Palette_gatekeeper")
 
 [sub_resource type="Gradient" id="Gradient_inner_streets"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.0912, 0.1766, 0.0484, 1, 0.3155, 0.7642, 0.2565, 1, 0.7121, 0.9482, 0.7035, 1)
+colors = PackedColorArray(0.1766, 0.0484, 0.1082, 1.0000, 0.7642, 0.2565, 0.4596, 1.0000, 0.9482, 0.7035, 0.7851, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_inner_streets"]
 resource_name = "Inner city streets"
@@ -181,7 +181,7 @@ portrait_gradient = SubResource("Palette_roofs")
 
 [sub_resource type="Gradient" id="Gradient_barracks"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.1583, 0.1656, 0.0584, 1, 0.5641, 0.7037, 0.1770, 1, 0.8683, 0.8980, 0.6955, 1)
+colors = PackedColorArray(0.1656, 0.1191, 0.0584, 1.0000, 0.7037, 0.5106, 0.1770, 1.0000, 0.8980, 0.8373, 0.6955, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_barracks"]
 resource_name = "Barracks"
@@ -197,7 +197,7 @@ portrait_gradient = SubResource("Palette_barracks")
 
 [sub_resource type="Gradient" id="Gradient_molting"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.1477, 0.2356, 0.0610, 1, 0.2774, 0.7224, 0.1020, 1, 0.6680, 0.9109, 0.6484, 1)
+colors = PackedColorArray(0.2327, 0.0610, 0.2356, 1.0000, 0.7224, 0.1020, 0.6914, 1.0000, 0.9109, 0.6484, 0.8803, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_molting"]
 resource_name = "Molting hall"
@@ -214,7 +214,7 @@ portrait_gradient = SubResource("Palette_molting")
 
 [sub_resource type="Gradient" id="Gradient_aviary"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.0647, 0.1384, 0.1259, 1, 0.1800, 0.6591, 0.7275, 1, 0.7020, 0.8894, 0.8516, 1)
+colors = PackedColorArray(0.0647, 0.1065, 0.1384, 1.0000, 0.1800, 0.4537, 0.7275, 1.0000, 0.7020, 0.7832, 0.8894, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_aviary"]
 resource_name = "Aviary"
@@ -264,7 +264,7 @@ portrait_gradient = SubResource("Palette_reliquary")
 
 [sub_resource type="Gradient" id="Gradient_inner_gatekeeper"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.2012, 0.1644, 0.0943, 1, 0.6594, 0.6701, 0.2138, 1, 0.8963, 0.9335, 0.7940, 1)
+colors = PackedColorArray(0.2012, 0.1442, 0.0943, 1.0000, 0.6701, 0.4572, 0.2138, 1.0000, 0.9335, 0.8777, 0.7940, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_inner_gatekeeper"]
 resource_name = "Inner gatekeeper"
@@ -365,7 +365,7 @@ portrait_gradient = SubResource("Palette_hatchery")
 
 [sub_resource type="Gradient" id="Gradient_citadel_streets"]
 offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.0618, 0.1496, 0.1145, 1, 0.1840, 0.8495, 0.3503, 1, 0.6513, 0.9462, 0.7259, 1)
+colors = PackedColorArray(0.1496, 0.0618, 0.0691, 1.0000, 0.8495, 0.1840, 0.1951, 1.0000, 0.9462, 0.6660, 0.6513, 1.0000)
 
 [sub_resource type="GradientTexture1D" id="Palette_citadel_streets"]
 resource_name = "Citadel streets"

@@ -6,6 +6,7 @@ const STARTING_RP := 3
 const MAX_RP := 5
 
 var army: Array[UnitState] = []
+var starting_slots: Dictionary[UnitState, int] = {}
 var rp: int = STARTING_RP
 var cleared_encounters: Array[EncounterDefinition] = []
 var defeated: bool = false
