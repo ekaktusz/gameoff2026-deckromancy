@@ -19,6 +19,7 @@
 [ext_resource type="Resource" path="res://Gameplay/Units/doomed_jackdaw.tres" id="17"]
 [ext_resource type="Resource" path="res://Gameplay/Units/gutter_ram.tres" id="18"]
 [ext_resource type="Resource" path="res://Gameplay/Units/darius.tres" id="19"]
+[ext_resource type="PackedScene" path="res://Scenes/Story/story_box.tscn" id="20"]
 
 [sub_resource type="Theme" id="Theme_prototype"]
 default_font_size = 26
@@ -473,6 +474,8 @@ theme_override_constants/margin_right = 64
 theme_override_constants/margin_bottom = 36
 
 [node name="World" type="Node2D" parent="." unique_id=694404281]
+
+[node name="StoryBox" parent="." instance=ExtResource("20")]
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1743936898]
 process_mode = 3

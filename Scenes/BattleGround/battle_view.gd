@@ -18,7 +18,6 @@ const ENEMY := BattleEvent.Side.ENEMY
 const ANIM_SPEED := 1.0
 const SWAP_ARC := 70.0
 const DEAL_OFFSET := 760.0
-const BACKGROUND_PAN := Vector2(-0.65, 0.55)
 const DAMAGE_COLOR := Color(1, 0.86, 0.74)
 const GAIN_COLOR := Color(0.55, 1, 0.45)
 const STAT_LOSS_COLOR := Color(1, 0.4, 0.35)
@@ -27,10 +26,8 @@ var _battle: BattleState
 var _cards: Dictionary = {}
 var _selected_column: int = -1
 var _busy: bool = false
-var _background_progress: float = 0.0
 
 @onready var _background: Sprite2D = $Background
-@onready var _background_scale := _background.scale
 @onready var _enemy_slots: SlotRow = $EnemySlots
 @onready var _ally_slots: SlotRow = $AllySlots
 @onready var _card_layer: Node2D = $Cards
@@ -45,12 +42,11 @@ var _background_progress: float = 0.0
 
 func _ready() -> void:
 	get_viewport().size_changed.connect(_position_background)
-
-
-func display(battle: BattleState, background_progress: float = 0.0) -> void:
-	_battle = battle
-	_background_progress = clampf(background_progress, 0.0, 1.0)
 	_position_background()
+
+
+func display(battle: BattleState) -> void:
+	_battle = battle
 	_title.text = battle.encounter.title
 	_status.text = "Drag your cards to arrange them."
 	for side: int in [ENEMY, ALLY]:
@@ -63,11 +59,10 @@ func display(battle: BattleState, background_progress: float = 0.0) -> void:
 
 func _position_background() -> void:
 	var viewport_size := get_viewport_rect().size
-	var base_size := _background.texture.get_size() * _background_scale
-	var cover := maxf(1.0, maxf(viewport_size.x / base_size.x, viewport_size.y / base_size.y))
-	_background.scale = _background_scale * cover
-	var margin := (base_size * cover - viewport_size).max(Vector2.ZERO) / 2.0
-	_background.position = viewport_size / 2.0 + margin * BACKGROUND_PAN * _background_progress
+	var texture_size := _background.texture.get_size()
+	var fit := minf(viewport_size.x / texture_size.x, viewport_size.y / texture_size.y)
+	_background.scale = Vector2.ONE * fit
+	_background.position = viewport_size / 2.0
 
 
 func _deal_in() -> void:
@@ -105,10 +100,8 @@ func _refresh() -> void:
 		card.hover_enabled = not _busy
 
 	_refresh_rip()
-	_graveyard.visible = not arranging
-	_graveyard.interactions_enabled = not _busy
-	if not arranging:
-		_graveyard.display(_battle.run, _battle.graveyard)
+	_graveyard.interactions_enabled = not arranging and not _busy
+	_graveyard.display(_battle.run, _battle.graveyard)
 
 	_sacrifice.visible = not arranging
 	_sacrifice.disabled = _busy or _selected_column == -1
@@ -385,7 +378,6 @@ func _play_death(event: BattleEvent) -> void:
 		await _wait(card.die(_t(0.35)))
 		card.queue_free()
 	var gained := _battle.apply_death(event)
-	_graveyard.visible = true
 	if gained == 0:
 		_graveyard.display(_battle.run, _battle.graveyard)
 	await _play_rip_gain(gained, _slot_position(event.side, event.column))
@@ -398,8 +390,7 @@ func _play_rip_gain(amount: int, from: Vector2) -> void:
 	await _wait(FloatingText.spawn(_fx, "%+d RiP" % amount, GAIN_COLOR, from, to, _t(0.7)))
 	SoundManager.play_sfx(RIP_GAIN_SFX)
 	_refresh_rip()
-	if _graveyard.visible:
-		_graveyard.display(_battle.run, _battle.graveyard)
+	_graveyard.display(_battle.run, _battle.graveyard)
 
 
 func _row(side: int) -> Array[UnitState]:

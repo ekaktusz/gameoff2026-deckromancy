@@ -35,8 +35,8 @@ counts, and the fight uses the same draw. Set the count to zero to use the fixed
 **Enemies** list. Use **Map Stage**, **Map Lane**
 and **Next Lanes** to place and connect encounters.
 **Portrait Gradient** colors enemies when they spawn. Recruited units carry
-their palette into later fights. The battle background pans toward the keep as
-the route progresses.
+their palette into later fights. The battle background fits the view at its
+original aspect ratio.
 
 The graveyard and battle screens are Node2D scenes. Each unit's **Art** group
 sets its `portrait` and `portrait_tint`. A same-size `mark_overlay` is drawn over

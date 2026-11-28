@@ -33,6 +33,13 @@ var _cards: Dictionary = {}
 
 func _ready() -> void:
 	_background.visible = show_background
+	if show_background:
+		var title: Label = $Title
+		title.position = Vector2(1312, 838)
+		_status.position = Vector2(1362, 904)
+		_army_label.position = Vector2(1312, 754)
+		for label in [title, _status, _army_label]:
+			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 
 func display(run: DeckRun, dead: Array[UnitState], is_starting_yard: bool = false) -> void:
