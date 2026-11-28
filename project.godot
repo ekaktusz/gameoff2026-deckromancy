@@ -35,10 +35,6 @@ window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
 
-[gui]
-
-theme/custom="res://UI/button_theme.tres"
-
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
