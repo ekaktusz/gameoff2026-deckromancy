@@ -5,7 +5,9 @@ signal fight_requested(encounter: EncounterDefinition)
 signal retry_requested
 
 
-class EncounterButton extends Button:
+class EncounterButton:
+	extends Button
+
 	func _make_custom_tooltip(text: String) -> Object:
 		var preview := Label.new()
 		preview.theme_type_variation = &"TooltipLabel"

@@ -2,6 +2,8 @@ extends SceneTree
 ## Run after importing: godot --headless --script tools/check_gameplay.gd
 
 const DEFAULT_GRADIENT := preload("res://assets/units/unit_gradient.tres")
+const BATTLE_TEXTURE := preload("res://assets/backgrounds/battle_bg.png")
+const BONE_WARD := preload("res://Gameplay/Units/bone_ward.tres")
 
 var _failed := false
 
@@ -45,7 +47,7 @@ func _check_gameplay() -> void:
 	var rook := load("res://Gameplay/Units/rook_captain.tres") as UnitDefinition
 	var hound := load("res://Gameplay/Units/grave_hound.tres") as UnitDefinition
 	var guard := load("res://Gameplay/Units/silt_guard.tres") as UnitDefinition
-	var spare := load("res://Gameplay/Units/bone_ward.tres") as UnitDefinition
+	var spare := BONE_WARD
 	game.enemy_pool.assign([hound, rook, guard, spare])
 	root.add_child(game)
 	root.get_node("MusicPlayer/AudioStreamPlayer").stop()
@@ -105,8 +107,9 @@ func _check_gameplay() -> void:
 		"Show the empty graveyard status before the first round"
 	)
 	var battle_art := battle_view.get_node("Background") as Sprite2D
-	var battle_texture := load("res://assets/backgrounds/battle_bg.png") as Texture2D
-	_expect(battle_art.texture == battle_texture, "First fight uses the dedicated battle background")
+	_expect(
+		battle_art.texture == BATTLE_TEXTURE, "First fight uses the dedicated battle background"
+	)
 	var battle_tint := battle_art.self_modulate
 	_expect(battle_tint != Color.WHITE, "Keep the battle background dimmed")
 	_expect(not battle_view.can_process(), "Block battle input during the tutorial")
@@ -210,8 +213,9 @@ func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
 	_check_stat_color(cards[recruit], Color.GOLD)
 	_check_stat_color(cards[battle.enemies[2]], Color.AQUAMARINE)
 	var background := next_view.get_node("Background") as Sprite2D
-	var battle_texture := load("res://assets/backgrounds/battle_bg.png") as Texture2D
-	_expect(background.texture == battle_texture, "Later fights use the dedicated battle background")
+	_expect(
+		background.texture == BATTLE_TEXTURE, "Later fights use the dedicated battle background"
+	)
 	var viewport := next_view.get_viewport_rect()
 	var art_rect := background.transform * background.get_rect()
 	_expect(viewport.encloses(art_rect), "Show the entire battle background")
@@ -507,9 +511,12 @@ func _check_card_labels(card: Node2D) -> void:
 		var unit := load("res://Gameplay/Units/" + file) as UnitDefinition
 		card.fit_name(unit.title)
 		var font_size := title.get_theme_font_size("font_size")
-		var width := title.get_theme_font("font").get_string_size(
-			unit.title, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size
-		).x
+		var width := (
+			title
+			. get_theme_font("font")
+			. get_string_size(unit.title, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+			. x
+		)
 		_expect(width <= title.size.x, "Name must fit: %s" % unit.title)
 	_expect(faction.position.y >= ability.position.y + ability_height, "Faction goes below ability")
 	_expect(is_zero_approx(faction.get_rect().get_center().x), "Faction must be centered")
@@ -596,7 +603,7 @@ func _check_abilities() -> void:
 
 
 func _check_deaths() -> void:
-	var stationary := load("res://Gameplay/Units/bone_ward.tres") as UnitDefinition
+	var stationary := BONE_WARD
 	var ram := load("res://Gameplay/Units/gutter_ram.tres") as UnitDefinition
 	var doomed := load("res://Gameplay/Units/doomed_jackdaw.tres") as UnitDefinition
 	var encounter := EncounterDefinition.new()
