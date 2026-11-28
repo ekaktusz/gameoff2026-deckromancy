@@ -24,6 +24,13 @@ func _ready() -> void:
 	_show_city_story(0, STORY_BOX.INTRO, _start_run)
 
 
+func _restart_run() -> void:
+	for connection in _story.dismissed.get_connections():
+		_story.dismissed.disconnect(connection.callable)
+	_story.close()
+	_start_run()
+
+
 func _start_run() -> void:
 	_run = DeckRun.new()
 	_starting_graveyard.clear()

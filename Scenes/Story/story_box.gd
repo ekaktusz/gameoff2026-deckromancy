@@ -59,10 +59,17 @@ func display(text: String, backdrop: CanvasItem, centered: bool = false) -> void
 	_panel.size_flags_vertical = alignment
 	_backdrop = backdrop
 	if _backdrop != null:
-		_backdrop_modulate = _backdrop.self_modulate
-		_backdrop.self_modulate = Color.WHITE
+		_backdrop_modulate = _backdrop.modulate
+		_backdrop.modulate = Color.WHITE
 	show()
 	grab_focus()
+
+
+func close() -> void:
+	if is_instance_valid(_backdrop):
+		_backdrop.modulate = _backdrop_modulate
+	_backdrop = null
+	hide()
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -70,7 +77,5 @@ func _gui_input(event: InputEvent) -> void:
 	if click != null and click.button_index == MOUSE_BUTTON_LEFT and click.pressed:
 		accept_event()
 		if click.double_click:
-			if _backdrop != null:
-				_backdrop.self_modulate = _backdrop_modulate
-			hide()
+			close()
 			dismissed.emit()

@@ -449,7 +449,7 @@ color = Color(0.1, 0.085, 0.075, 1)
 
 [node name="MapBackground" type="TextureRect" parent="." unique_id=2055377424]
 visible = false
-self_modulate = Color(0.55, 0.55, 0.55, 1)
+modulate = Color(0.55, 0.55, 0.55, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -488,4 +488,6 @@ visible = false
 visible = false
 
 [connection signal="credits_menu_requested" from="UI/PauseMenu" to="UI" method="_on_pause_menu_credits_menu_requested"]
+[connection signal="restart_requested" from="UI/PauseMenu" to="UI" method="_on_pause_menu_restart_requested"]
 [connection signal="settings_menu_requested" from="UI/PauseMenu" to="UI" method="_on_pause_menu_settings_menu_requested"]
+[connection signal="restart_requested" from="UI" to="." method="_restart_run"]

@@ -95,15 +95,14 @@ func _refresh() -> void:
 	for unit: UnitState in _cards:
 		var card: Card2D = _cards[unit]
 		var is_ally := card.look == Card2D.Look.ALLY
-		card.clickable = is_ally and not arranging and not _busy
+		card.clickable = is_ally and not _busy
 		card.draggable = is_ally and arranging and not _busy
 		card.hover_enabled = not _busy
 
 	_refresh_rip()
-	_graveyard.interactions_enabled = not arranging and not _busy
+	_graveyard.interactions_enabled = not _busy
 	_graveyard.display(_battle.run, _battle.graveyard)
 
-	_sacrifice.visible = not arranging
 	_sacrifice.disabled = _busy or _selected_column == -1
 	_sacrifice.text = (
 		"Sacrifice %s" % _battle.allies[_selected_column].title()
@@ -111,10 +110,10 @@ func _refresh() -> void:
 		else "Sacrifice ally"
 	)
 	_action.disabled = _busy
-	if arranging:
-		_action.text = "Resolve round"
-	elif _battle.run.army.is_empty():
+	if _battle.run.army.is_empty():
 		_action.text = "End run"
+	elif arranging:
+		_action.text = "Resolve round"
 	elif _battle.enemies_defeated():
 		_action.text = "Return to the city"
 	else:
@@ -166,7 +165,7 @@ func _add_card(unit: UnitState, side: int, at: Vector2) -> Card2D:
 
 
 func _on_card_clicked(unit: UnitState) -> void:
-	if _busy or _battle.round_number == 0:
+	if _busy:
 		return
 	var column := _battle.allies.find(unit)
 	if column == -1:
