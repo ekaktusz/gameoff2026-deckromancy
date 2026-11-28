@@ -5,6 +5,7 @@ const MAP := preload("res://Scenes/Map/map_scene.tscn")
 const BATTLE := preload("res://Scenes/BattleGround/battle_ground.tscn")
 
 @export var starting_units: Array[UnitDefinition] = []
+@export var enemy_pool: Array[UnitDefinition] = []
 @export var encounters: Array[EncounterDefinition] = []
 
 var _run: DeckRun
@@ -47,11 +48,11 @@ func _show_map() -> void:
 	for encounter in _run.cleared_encounters:
 		cleared_bosses += int(encounter.is_boss)
 	# ponytail: Load the numbered city backgrounds on demand.
-	var background_path := "res://assets/city_%02d.png" % mini(cleared_bosses, 4)
+	var background_path := "res://assets/backgrounds/city_%02d.png" % mini(cleared_bosses, 4)
 	_map_background.texture = load(background_path) as Texture2D
 	var map_view := MAP.instantiate() as MapView
 	_show_screen(map_view)
-	map_view.display(_run, encounters, _available_encounters())
+	map_view.display(_run, encounters, _available_encounters(), enemy_pool)
 	map_view.fight_requested.connect(_start_battle)
 	map_view.retry_requested.connect(_start_run)
 
@@ -69,8 +70,19 @@ func _start_battle(encounter: EncounterDefinition) -> void:
 		return
 	var battle_view := BATTLE.instantiate() as BattleView
 	_show_screen(battle_view)
-	battle_view.display(BattleState.new(_run, encounter))
+	battle_view.display(
+		BattleState.new(_run, encounter, enemy_pool), _encounter_progress(encounter)
+	)
 	battle_view.finished.connect(_on_battle_finished.bind(encounter))
+
+
+func _encounter_progress(encounter: EncounterDefinition) -> float:
+	if encounter.map_stage <= 0:
+		return float(_run.cleared_encounters.size()) / maxi(1, encounters.size() - 1)
+	var last_stage := 1
+	for entry in encounters:
+		last_stage = maxi(last_stage, entry.map_stage)
+	return float(encounter.map_stage - 1) / maxi(1, last_stage - 1)
 
 
 func _on_battle_finished(won: bool, encounter: EncounterDefinition) -> void:

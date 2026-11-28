@@ -32,7 +32,10 @@ func _ready() -> void:
 
 
 func display(
-	run: DeckRun, route: Array[EncounterDefinition], available: Array[EncounterDefinition]
+	run: DeckRun,
+	route: Array[EncounterDefinition],
+	available: Array[EncounterDefinition],
+	enemy_pool: Array[UnitDefinition],
 ) -> void:
 	_route = route
 	_available = available
@@ -59,10 +62,8 @@ func display(
 		var border := CLEARED_BORDER if cleared else LOCKED_BORDER
 		button.add_theme_stylebox_override("disabled", _node_style(NODE_FILL, border))
 		button.add_theme_color_override("font_disabled_color", Color(0.68, 0.62, 0.56))
-		var names := PackedStringArray()
-		for enemy in encounter.enemies:
-			names.append(enemy.title)
-		button.tooltip_text = ", ".join(names)
+		var lineup := run.enemy_lineup(encounter, enemy_pool)
+		button.tooltip_text = _enemy_types(lineup, encounter.is_boss)
 		if encounter.is_boss:
 			button.add_theme_color_override("font_color", ACTIVE_PATH.lightened(0.35))
 			button.add_theme_color_override("font_disabled_color", Color(0.78, 0.65, 0.46))
@@ -87,6 +88,21 @@ func display(
 		card.position = slot.custom_minimum_size / 2.0
 		slot.add_child(card)
 		card.display(unit, Card2D.Look.ALLY)
+
+
+func _enemy_types(lineup: Array[UnitDefinition], is_boss: bool) -> String:
+	var counts: Dictionary[String, int] = {}
+	var default_type := "Boss" if is_boss else "Enemy"
+	for index in mini(lineup.size(), DeckRun.MAX_UNITS):
+		var enemy := lineup[index]
+		if enemy == null:
+			continue
+		var type: String = UnitDefinition.FACTION_NAMES.get(enemy.faction, default_type)
+		counts[type] = counts.get(type, 0) + 1
+	var summary := PackedStringArray()
+	for type in counts:
+		summary.append("%d× %s" % [counts[type], type])
+	return " · ".join(summary)
 
 
 func _stage(encounter: EncounterDefinition, index: int) -> int:

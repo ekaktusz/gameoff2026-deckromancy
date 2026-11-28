@@ -3,6 +3,8 @@ extends Resource
 
 @export var title: String
 @export var enemies: Array[UnitDefinition] = []
+## A positive count draws this many enemies from the GameLoop enemy pool.
+@export_range(0, 5) var random_enemy_count: int = 0
 ## A positive stage places this encounter on a branching map. Stage 0 uses
 ## the order in the GameLoop encounter list for simple linear scenes.
 @export var map_stage: int = 0
@@ -11,3 +13,5 @@ extends Resource
 ## Lanes on the next stage that can be reached after clearing this encounter.
 ## Keep this as an Array[int] so the links survive the Web export.
 @export var next_lanes: Array[int] = []
+## Optional gradient map for enemies created in this encounter.
+@export var portrait_gradient: GradientTexture1D

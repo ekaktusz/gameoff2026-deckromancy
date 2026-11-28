@@ -1,6 +1,8 @@
 extends SceneTree
 ## Run after importing: godot --headless --script tools/check_gameplay.gd
 
+const DEFAULT_GRADIENT := preload("res://assets/units/unit_gradient.tres")
+
 var _failed := false
 
 
@@ -16,16 +18,25 @@ func _check_gameplay() -> void:
 	_check_map_backgrounds(game_scene)
 	var game = game_scene.instantiate()
 	var route: Array[EncounterDefinition] = game.encounters
+	_check_encounter_lineups(route, game.enemy_pool)
 	var darius := route.back() as EncounterDefinition
 	_expect(darius.title == "Darius" and darius.is_boss, "Darius must be the final boss")
 	_expect(DeckRun.route_successors(route[-2], route) == [darius], "Citadel must lead to Darius")
 
 	var enemy := UnitDefinition.new()
 	enemy.ability = UnitDefinition.Ability.GRAVEYARD
+	enemy.faction = UnitDefinition.Faction.BUG
 	var encounter := EncounterDefinition.new()
 	encounter.title = "Regression fight"
 	encounter.enemies.assign([enemy, enemy])
-	game.encounters.assign([encounter])
+	encounter.portrait_gradient = GradientTexture1D.new()
+	encounter.portrait_gradient.gradient = Gradient.new()
+	var next_encounter := EncounterDefinition.new()
+	next_encounter.title = "Next regression fight"
+	next_encounter.enemies.append(enemy)
+	next_encounter.portrait_gradient = GradientTexture1D.new()
+	next_encounter.portrait_gradient.gradient = Gradient.new()
+	game.encounters.assign([encounter, next_encounter])
 	var rook := load("res://Gameplay/Units/rook_captain.tres") as UnitDefinition
 	var hound := load("res://Gameplay/Units/grave_hound.tres") as UnitDefinition
 	game.starting_units.assign([hound, rook])
@@ -46,14 +57,25 @@ func _check_gameplay() -> void:
 	var map := game.get_node("Screen/MapScene") as Control
 	_expect(map.get_node("ArmyCards").get_child_count() == 3, "Map must show the army's cards")
 	_expect(not map.get_node("Retry").visible, "There should be no extra start button")
-	map.get_node("Graph").get_child(0).pressed.emit()
+	var button := map.get_node("Graph").get_child(0) as Button
+	_expect(button.tooltip_text == "2× Bug", "Map preview must show enemy types and counts")
+	button.pressed.emit()
 	_expect(not game.get_node("MapBackground").visible, "Map background must hide in battle")
 	var battle_view: Node = game.get_node("World/BattleGround")
 	var battle: BattleState = battle_view.get("_battle")
 	var action := battle_view.get_node("HUD/Action") as Button
+	var recruit := battle.enemies[1]
 	var cards: Dictionary = battle_view.get("_cards")
 	var enemy_ability := cards[battle.enemies[2]].get_node("Ability") as Label
 	_expect(enemy_ability.text.is_empty(), "Enemy cards must hide their graveyard ability")
+	_expect(
+		_card_gradient(cards[recruit]) == encounter.portrait_gradient,
+		"New enemies must use the encounter gradient"
+	)
+	_expect(
+		_card_gradient(cards[starters[0]]) == DEFAULT_GRADIENT,
+		"Starting cards must keep the default gradient"
+	)
 	var popups: Array[String] = []
 	battle_view.get_node("Fx").child_entered_tree.connect(
 		func(label: Label) -> void: popups.append(label.text)
@@ -79,10 +101,49 @@ func _check_gameplay() -> void:
 	_expect(battle.enemies_defeated() and battle.run.rp == 3, "Last enemy death must award RiP")
 	_expect(battle.graveyard.has(fallen) and fallen.marks == 1, "Fallen ally must enter the yard")
 	await _check_battle_yard(battle_view, battle, action, fallen, starters[1])
+	await _check_next_battle(game, battle_view, recruit)
 	if not _failed:
 		print("Verified map backgrounds, MARK layers, faction abilities, and round playback")
 	await create_timer(0.5, true, false, true).timeout
 	quit(int(_failed))
+
+
+func _check_next_battle(game: Node, view: Node, recruit: UnitState) -> void:
+	var yard = view.get_node("Graveyard")
+	var yard_cards: Dictionary = yard.get("_cards")
+	_expect(_card_gradient(yard_cards[recruit]) == recruit.portrait_gradient, "Enemy keeps its art")
+	var slots = view.get_node("AllySlots")
+	var action := view.get_node("HUD/Action") as Button
+	_pointer(yard.card_global_position(recruit), slots.slot_position(3))
+	await _wait_for_action(action)
+	var before := (view.get_node("Background") as Sprite2D).position
+	action.pressed.emit()
+	var previews := game.get_node("Screen/MapScene/ArmyCards")
+	var preview := previews.get_child(previews.get_child_count() - 1).get_child(0)
+	_expect(_card_gradient(preview) == recruit.portrait_gradient, "Map shows the recruited palette")
+	game.get_node("Screen/MapScene/Graph").get_child(1).pressed.emit()
+	var next_view := game.get_node("World/BattleGround") as Node2D
+	var battle: BattleState = next_view.get("_battle")
+	var cards: Dictionary = next_view.get("_cards")
+	_expect(
+		_card_gradient(cards[recruit]) == recruit.portrait_gradient, "Recruit keeps its gradient"
+	)
+	_expect(
+		_card_gradient(cards[battle.enemies[2]]) == battle.encounter.portrait_gradient,
+		"New enemies use the next encounter's gradient"
+	)
+	var background := next_view.get_node("Background") as Sprite2D
+	var viewport := next_view.get_viewport_rect()
+	_expect(background.position.x < before.x and background.position.y > before.y, "City crop pans")
+	_expect(
+		(background.transform * background.get_rect()).encloses(viewport), "City fills the view"
+	)
+	await _wait_for_action(next_view.get_node("HUD/Action") as Button)
+
+
+func _card_gradient(card: Node) -> GradientTexture1D:
+	var portrait := card.get_node("Portrait") as Sprite2D
+	return (portrait.material as ShaderMaterial).get_shader_parameter("gradient_map")
 
 
 func _check_map_backgrounds(scene: PackedScene) -> void:
@@ -92,13 +153,13 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	var background := game.get_node("MapBackground") as TextureRect
 	_expect(not background.visible, "City background must be hidden in the starting graveyard")
 	game.get_node("World/GraveyardScene").continue_requested.emit()
-	var city_start := load("res://assets/city_00.png") as Texture2D
+	var city_start := load("res://assets/backgrounds/city_00.png") as Texture2D
 	_expect(background.visible and background.texture == city_start, "Map must begin with city 00")
 	var stage := 0
 	for encounter: EncounterDefinition in game.encounters:
 		stage += int(encounter.is_boss)
 		game._on_battle_finished(true, encounter)
-		var texture := load("res://assets/city_%02d.png" % stage) as Texture2D
+		var texture := load("res://assets/backgrounds/city_%02d.png" % stage) as Texture2D
 		_expect(background.texture == texture, "Wrong map background after %s" % encounter.title)
 	_expect(stage == 4, "Darius must unlock city 04")
 	game.get_node("Screen/MapScene").retry_requested.emit()
@@ -107,11 +168,44 @@ func _check_map_backgrounds(scene: PackedScene) -> void:
 	game.queue_free()
 
 
+func _check_encounter_lineups(
+	route: Array[EncounterDefinition], pool: Array[UnitDefinition]
+) -> void:
+	_expect(pool.size() == 9, "The random pool must contain the nine basic units")
+	var run := DeckRun.new()
+	for encounter in route:
+		var preview := run.enemy_lineup(encounter, pool)
+		var battle := BattleState.new(run, encounter, pool)
+		if encounter.is_boss:
+			_expect(battle.enemies_remaining() == encounter.enemies.size(), "Fixed boss lineup")
+			continue
+		_expect(encounter.enemies.is_empty(), "Regular fights must draw their entire lineup")
+		_expect(encounter.random_enemy_count > 0, "Regular fights need a configured enemy count")
+		_expect(battle.enemies_remaining() == encounter.random_enemy_count, "Random lineup size")
+		var actual: Array[UnitDefinition] = []
+		for enemy in battle.enemies:
+			if enemy != null:
+				_expect(pool.has(enemy.definition), "Random enemies must come from the basic pool")
+				actual.append(enemy.definition)
+		_expect(actual == preview, "The lineup seen on the map must match the fight")
+	var final_battle := BattleState.new(DeckRun.new(), route.back(), pool)
+	var names: Array[String] = []
+	for enemy in final_battle.enemies:
+		if enemy != null:
+			names.append(enemy.title())
+	_expect(names == ["Gatekeeper", "Darius", "Inner Gatekeeper"], "Darius needs both Gatekeepers")
+
+
 func _check_battle_yard(
 	view: Node, battle: BattleState, action: Button, fallen: UnitState, ally: UnitState
 ) -> void:
 	var yard = view.get_node("Graveyard")
 	var slots = view.get_node("AllySlots")
+	var yard_cards: Dictionary = yard.get("_cards")
+	_expect(
+		_card_gradient(yard_cards[fallen]) == DEFAULT_GRADIENT,
+		"Fallen starting cards keep the default gradient"
+	)
 	var from: Vector2 = yard.card_global_position(fallen)
 	var occupied: Vector2 = slots.slot_position(0)
 	_pointer(from, from)
@@ -168,10 +262,26 @@ func _check_portraits() -> void:
 	var scene := load("res://Scenes/Card/card_2d.tscn") as PackedScene
 	var card = scene.instantiate()
 	root.add_child(card)
+	var title := card.get_node("Name") as Label
+	var font := load("res://assets/fonts/HoldMoney-Regular.ttf") as Font
+	_expect(font != null and title.get_theme_font("font") == font, "Cards must use Hold Money")
+	_check_card_labels(card)
 	var portrait := card.get_node("Portrait") as Sprite2D
+	_check_card_frames(card, portrait)
 	var plant := portrait.get_node("PlantOverlay") as Sprite2D
-	var poop_portrait := load("res://assets/poop_warrior.png") as Texture2D
+	var material := portrait.material as ShaderMaterial
+	var gradient := DEFAULT_GRADIENT as GradientTexture1D
+	_expect(gradient != null and gradient.gradient != null, "Portrait gradient must be editable")
+	_expect(
+		material != null and material.get_shader_parameter("gradient_map") == gradient,
+		"The shared portrait must use the unit gradient"
+	)
+	_expect(plant.material == null and not plant.use_parent_material, "Plant keeps its colors")
+	var poop_portrait := load("res://assets/units/poop_warrior.png") as Texture2D
 	var units := [
+		"silt_guard",
+		"shell_mender",
+		"carapace_hexer",
 		"ash_crow",
 		"rook_captain",
 		"doomed_jackdaw",
@@ -187,9 +297,11 @@ func _check_portraits() -> void:
 		var definition := load("res://Gameplay/Units/%s.tres" % name) as UnitDefinition
 		var unit := UnitState.new(definition)
 		card.display(unit, card.look, true)
+		var original_fit := portrait.transform
 		_expect(not plant.visible, "%s must show no plant before a MARK" % name)
 		unit.revive()
 		card.display(unit, card.look)
+		_expect(portrait.transform == original_fit, "%s stays aligned when marked" % name)
 		_expect(
 			plant.visible and plant.texture == definition.mark_overlay, "%s needs a layer" % name
 		)
@@ -205,8 +317,8 @@ func _check_portraits() -> void:
 		card.display(unit, card.look)
 		_expect(portrait.texture == poop_portrait and not plant.visible, "%s Poop art" % name)
 	var legacy := UnitDefinition.new()
-	legacy.portrait = load("res://assets/frog.png") as Texture2D
-	legacy.marked_portrait = load("res://assets/frog_marked.png") as Texture2D
+	legacy.portrait = load("res://assets/units/legacy/frog.png") as Texture2D
+	legacy.marked_portrait = load("res://assets/units/legacy/frog_marked.png") as Texture2D
 	var marked := UnitState.new(legacy)
 	marked.revive()
 	card.display(marked, card.look)
@@ -216,6 +328,49 @@ func _check_portraits() -> void:
 	card.display(marked, card.look)
 	_expect(portrait.texture == poop_portrait, "Poop Warrior replaces legacy MARK art too")
 	card.free()
+
+
+func _check_card_labels(card: Node2D) -> void:
+	var ability := card.get_node("Ability") as Label
+	var faction := card.get_node("Faction") as Label
+	var ability_height := ability.size.y
+	for description: String in UnitDefinition.ABILITY_DESCRIPTIONS.values():
+		ability.text = description
+		_expect(ability.get_minimum_size().y <= ability_height, "Text must fit: %s" % description)
+	_expect(faction.position.y >= ability.position.y + ability_height, "Faction goes below ability")
+	_expect(is_zero_approx(faction.get_rect().get_center().x), "Faction must be centered")
+	var attack := card.get_node("Attack") as Label
+	var hp := card.get_node("HP") as Label
+	_expect(attack.get_rect().get_center() == Vector2(-89, 133), "Attack aligns with its plaque")
+	_expect(hp.get_rect().get_center() == Vector2(89, 133), "HP aligns with its plaque")
+
+
+func _check_card_frames(card: Node2D, portrait: Sprite2D) -> void:
+	var backing := card.get_node("Backing") as Sprite2D
+	var frame := card.get_node("Frame") as Sprite2D
+	_expect(backing.material == null and frame.material == null, "Card artwork keeps its colors")
+	_expect(
+		backing.get_index() < portrait.get_index() and portrait.get_index() < frame.get_index(),
+		"Layers must draw backing, portrait, then frame"
+	)
+	_expect(backing.texture != null and backing.scale == frame.scale, "Card layers must align")
+	var unit := UnitState.new(UnitDefinition.new())
+	var frames := ["", "", " broken", " broken 2", " broken 3", " broken 3"]
+	var card_look: int = card.get("look")
+	for marks in frames.size():
+		unit.marks = marks
+		card.display(unit, card_look)
+		var path := "res://assets/cards/card bg own transparent middle%s.png" % frames[marks]
+		_expect(frame.texture != null and frame.texture == load(path), "Frame at %d MARKs" % marks)
+	unit.marks = 3
+	card.display(unit, card_look, true)
+	var broken_3 := load("res://assets/cards/card bg own transparent middle broken 3.png")
+	_expect(frame.texture == broken_3, "Revival preview must show the upcoming MARK frame")
+	card.selected = true
+	card._set_hovered(true, true)
+	_expect(frame.self_modulate == Color.WHITE, "Selection and hover must preserve frame colors")
+	card._set_hovered(false, true)
+	card.selected = false
 
 
 func _check_abilities() -> void:
@@ -261,17 +416,33 @@ func _check_abilities() -> void:
 
 func _check_deaths() -> void:
 	var stationary := load("res://Gameplay/Units/bone_ward.tres") as UnitDefinition
+	var ram := load("res://Gameplay/Units/gutter_ram.tres") as UnitDefinition
 	var doomed := load("res://Gameplay/Units/doomed_jackdaw.tres") as UnitDefinition
 	var encounter := EncounterDefinition.new()
-	encounter.enemies.assign([stationary, doomed])
+	for holder in [stationary, ram]:
+		encounter.enemies.assign([holder, doomed])
+		var run := DeckRun.new()
+		run.army.append(UnitState.new(stationary))
+		var battle := BattleState.new(run, encounter)
+		var shifts := battle.begin_round()
+		_expect(shifts.size() == 1 and battle.enemies[0].definition == doomed, "Jackdaw jumps left")
+		_expect(battle.enemies[1].definition == holder, "Jump leaves the stationary unit in place")
+		_expect(battle.plan_shift_deaths(shifts).is_empty(), "Successful jump saves the Jackdaw")
+
 	for marks in [0, 1]:
+		var doomed_column := 3
+		if marks == 0:
+			encounter.enemies.assign([stationary, stationary, doomed])
+		else:
+			encounter.enemies.assign([stationary, doomed, stationary, stationary, stationary])
+			doomed_column = 1
 		var run := DeckRun.new()
 		var poop := UnitState.new(doomed)
 		for mark in UnitState.POOP_MARKS:
 			poop.revive()
 		run.army.append(poop)
 		var battle := BattleState.new(run, encounter)
-		battle.enemies[2].marks = marks
+		battle.enemies[doomed_column].marks = marks
 		var shifts := battle.begin_round()
 		var deaths := battle.plan_shift_deaths(shifts)
 		_expect(shifts.is_empty(), "Bone Ward and Poop Warrior must hold their slots")

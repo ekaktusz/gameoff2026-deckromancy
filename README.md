@@ -23,16 +23,23 @@ at the graveyard while iterating.
 | Battle board, slot layout and round playback | `Scenes/BattleGround/` |
 | Graveyard grid (start of run and in battle) | `Scenes/Graveyard/` |
 | City map | `Scenes/Map/` |
+| Card artwork, unit portraits, city backgrounds, UI font and music | `assets/cards/`, `assets/units/`, `assets/backgrounds/`, `assets/fonts/`, `assets/music/` |
 | Sound effects (generated: hit, empty hit, shift, hover, select, RiP gain/loss) | `assets/sfx/`, regenerate with `python3 tools/generate_hit_sfx.py` |
 
-Edit **Starting Units** and **Encounters** on the GameLoop node in the inspector
-to change the prototype content. Each encounter supports up to five enemies.
-Use **Map Stage**, **Map Lane** and **Next Lanes** to place and connect encounters.
+Edit **Starting Units**, **Enemy Pool** and **Encounters** on the GameLoop node in
+the inspector. Each encounter supports up to five enemies. Set **Random Enemy
+Count** to draw that many units from the pool. The map previews their types and
+counts, and the fight uses the same draw. Set the count to zero to use the fixed
+**Enemies** list. Use **Map Stage**, **Map Lane**
+and **Next Lanes** to place and connect encounters.
+**Portrait Gradient** colors enemies when they spawn. Recruited units carry
+their palette into later fights. The battle background pans toward the keep as
+the route progresses.
 
 The graveyard and battle screens are Node2D scenes. Each unit's **Art** group
 sets its `portrait` and `portrait_tint`. A same-size `mark_overlay` is drawn over
-the portrait once the unit carries a MARK. Cards without a layer use their
-`marked_portrait` or a tint. Slot positions are
+the portrait once the unit carries a MARK. Cards without a layer can use a
+`marked_portrait`. Slot positions are
 the `Slot0`–`Slot4` markers under `EnemySlots` and `AllySlots` in
 `battle_ground.tscn`. `ANIM_SPEED` in `battle_view.gd` scales every battle
 animation. The battle screen plays shifts, faction abilities and attacks in
@@ -51,8 +58,9 @@ carry into the next encounter. Each battle starts with a fresh graveyard.
 Birds try to shift one slot left at the start of each round, starting from the
 player's chosen formation. They can enter a vacant slot or swap with a bug or
 movable mammal. Each card can move once per round. Bone Ward keeps its slot.
-Doomed Jackdaw dies when it cannot shift. If no column has units on both sides
-after shifting, the closest opposing pair trades blows across lanes.
+Doomed Jackdaw can jump over one stationary ally into a vacant slot. It dies
+when it cannot shift or land. If no column has units on both sides after shifting,
+the closest opposing pair trades blows across lanes.
 
 Cards show their faction and ability. Blocked shift deaths resolve before stat
 bonuses, and stat changes appear above the affected cards.

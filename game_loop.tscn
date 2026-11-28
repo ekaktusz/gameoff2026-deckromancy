@@ -1,18 +1,17 @@
 [gd_scene format=3 uid="uid://cp03gm3dbew5m"]
 
-[ext_resource type="Script" path="res://game_loop.gd" id="1"]
-[ext_resource type="Script" path="res://Gameplay/unit_definition.gd" id="2"]
-[ext_resource type="Script" path="res://Gameplay/encounter_definition.gd" id="3"]
-[ext_resource type="Resource" path="res://Gameplay/Units/silt_guard.tres" id="4"]
-[ext_resource type="Resource" path="res://Gameplay/Units/bone_ward.tres" id="5"]
-[ext_resource type="Resource" path="res://Gameplay/Units/grave_hound.tres" id="6"]
-[ext_resource type="Resource" path="res://Gameplay/Units/gatekeeper.tres" id="7"]
-[ext_resource type="Script" path="res://UI/ui.gd" id="8"]
-[ext_resource type="PackedScene" path="res://UI/Menus/PauseMenu/pause_menu.tscn" id="9"]
-[ext_resource type="PackedScene" path="res://UI/Menus/SettingsMenu/settings_menu.tscn" id="10"]
-[ext_resource type="Resource" path="res://Gameplay/Units/inner_gatekeeper.tres" id="11"]
-[ext_resource type="Resource" path="res://Gameplay/Units/citadel_lord.tres" id="12"]
-
+[ext_resource type="Script" uid="uid://6p2o3kmpx13w" path="res://game_loop.gd" id="1"]
+[ext_resource type="Script" uid="uid://d3hynmklnka5y" path="res://Gameplay/unit_definition.gd" id="2"]
+[ext_resource type="Script" uid="uid://dbu0jhixo14n4" path="res://Gameplay/encounter_definition.gd" id="3"]
+[ext_resource type="Resource" uid="uid://drdbdpvxfl11o" path="res://Gameplay/Units/silt_guard.tres" id="4"]
+[ext_resource type="Resource" uid="uid://d0gjsj3aefj1l" path="res://Gameplay/Units/bone_ward.tres" id="5"]
+[ext_resource type="Resource" uid="uid://cn53vyff62e3d" path="res://Gameplay/Units/grave_hound.tres" id="6"]
+[ext_resource type="Resource" uid="uid://bqrc2ew8ocayy" path="res://Gameplay/Units/gatekeeper.tres" id="7"]
+[ext_resource type="Script" uid="uid://co2jxcbqxd52u" path="res://UI/ui.gd" id="8"]
+[ext_resource type="PackedScene" uid="uid://inxv7ghoaf62" path="res://UI/Menus/PauseMenu/pause_menu.tscn" id="9"]
+[ext_resource type="PackedScene" uid="uid://c55vl17w7kkn0" path="res://UI/Menus/SettingsMenu/settings_menu.tscn" id="10"]
+[ext_resource type="Resource" uid="uid://cro6cj8jslpxt" path="res://Gameplay/Units/inner_gatekeeper.tres" id="11"]
+[ext_resource type="Resource" uid="uid://fd7m25db4i38" path="res://Gameplay/Units/citadel_lord.tres" id="12"]
 [ext_resource type="Resource" path="res://Gameplay/Units/shell_mender.tres" id="13"]
 [ext_resource type="Resource" path="res://Gameplay/Units/carapace_hexer.tres" id="14"]
 [ext_resource type="Resource" path="res://Gameplay/Units/ash_crow.tres" id="15"]
@@ -21,57 +20,122 @@
 [ext_resource type="Resource" path="res://Gameplay/Units/gutter_ram.tres" id="18"]
 [ext_resource type="Resource" path="res://Gameplay/Units/darius.tres" id="19"]
 
+[sub_resource type="Theme" id="Theme_prototype"]
+default_font_size = 26
+
 [sub_resource type="Resource" id="Unit_test_99"]
 script = ExtResource("2")
 title = "Test Unit"
 attack = 99
 hp = 99
 
+[sub_resource type="Gradient" id="Gradient_streets"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0596, 0.2212, 0.1204, 1, 0.2208, 0.6753, 0.4213, 1, 0.6846, 0.9146, 0.8205, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_streets"]
+resource_name = "Lower streets"
+gradient = SubResource("Gradient_streets")
+
 [sub_resource type="Resource" id="Encounter_streets"]
 script = ExtResource("3")
 title = "Lower streets"
-enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5")])
+random_enemy_count = 2
 map_stage = 1
 next_lanes = Array[int]([-1, 1])
+portrait_gradient = SubResource("Palette_streets")
+
+[sub_resource type="Gradient" id="Gradient_aqueduct"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1757, 0.1727, 0.0779, 1, 0.6036, 0.4861, 0.2015, 1, 0.9198, 0.9205, 0.7599, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_aqueduct"]
+resource_name = "Old aqueduct"
+gradient = SubResource("Gradient_aqueduct")
 
 [sub_resource type="Resource" id="Encounter_aqueduct"]
 script = ExtResource("3")
 title = "Old aqueduct"
-enemies = Array[ExtResource("2")]([ExtResource("15"), ExtResource("4")])
+random_enemy_count = 3
 map_stage = 2
 map_lane = -1
 next_lanes = Array[int]([-1, 0])
+portrait_gradient = SubResource("Palette_aqueduct")
+
+[sub_resource type="Gradient" id="Gradient_burial"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0456, 0.1378, 0.1064, 1, 0.3605, 0.7944, 0.6215, 1, 0.6411, 0.9445, 0.8718, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_burial"]
+resource_name = "Burial row"
+gradient = SubResource("Gradient_burial")
 
 [sub_resource type="Resource" id="Encounter_burial"]
 script = ExtResource("3")
 title = "Burial row"
-enemies = Array[ExtResource("2")]([ExtResource("5"), ExtResource("13")])
+random_enemy_count = 3
 map_stage = 2
 map_lane = 1
 next_lanes = Array[int]([0, 1])
+portrait_gradient = SubResource("Palette_burial")
+
+[sub_resource type="Gradient" id="Gradient_cistern"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1069, 0.0578, 0.1878, 1, 0.3884, 0.2648, 0.7833, 1, 0.8608, 0.7181, 0.9575, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_cistern"]
+resource_name = "Flooded cistern"
+gradient = SubResource("Gradient_cistern")
 
 [sub_resource type="Resource" id="Encounter_cistern"]
 script = ExtResource("3")
 title = "Flooded cistern"
-enemies = Array[ExtResource("2")]([ExtResource("14"), ExtResource("5")])
+random_enemy_count = 3
 map_stage = 3
 map_lane = -1
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_cistern")
+
+[sub_resource type="Gradient" id="Gradient_market"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0400, 0.0460, 0.1534, 1, 0.1364, 0.2823, 0.6756, 1, 0.6336, 0.8025, 0.9021, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_market"]
+resource_name = "Market ruins"
+gradient = SubResource("Gradient_market")
 
 [sub_resource type="Resource" id="Encounter_market"]
 script = ExtResource("3")
 title = "Market ruins"
-enemies = Array[ExtResource("2")]([ExtResource("6"), ExtResource("16")])
+random_enemy_count = 3
 map_stage = 3
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_market")
+
+[sub_resource type="Gradient" id="Gradient_ossuary"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0917, 0.1950, 0.1812, 1, 0.1508, 0.7982, 0.7147, 1, 0.7140, 0.9033, 0.8153, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_ossuary"]
+resource_name = "Ossuary"
+gradient = SubResource("Gradient_ossuary")
 
 [sub_resource type="Resource" id="Encounter_ossuary"]
 script = ExtResource("3")
 title = "Ossuary"
-enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("4"), ExtResource("5")])
+random_enemy_count = 3
 map_stage = 3
 map_lane = 1
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_ossuary")
+
+[sub_resource type="Gradient" id="Gradient_gatekeeper"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1794, 0.1077, 0.0508, 1, 0.7299, 0.2736, 0.1516, 1, 0.9062, 0.7288, 0.7293, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_gatekeeper"]
+resource_name = "Gatekeeper"
+gradient = SubResource("Gradient_gatekeeper")
 
 [sub_resource type="Resource" id="Encounter_gatekeeper"]
 script = ExtResource("3")
@@ -80,59 +144,131 @@ enemies = Array[ExtResource("2")]([ExtResource("7")])
 map_stage = 4
 is_boss = true
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_gatekeeper")
+
+[sub_resource type="Gradient" id="Gradient_inner_streets"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0912, 0.1766, 0.0484, 1, 0.3155, 0.7642, 0.2565, 1, 0.7121, 0.9482, 0.7035, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_inner_streets"]
+resource_name = "Inner city streets"
+gradient = SubResource("Gradient_inner_streets")
 
 [sub_resource type="Resource" id="Encounter_inner_streets"]
 script = ExtResource("3")
 title = "Inner city streets"
-enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("6"), ExtResource("5"), ExtResource("6")])
+random_enemy_count = 4
 map_stage = 5
 next_lanes = Array[int]([-1, 0, 1])
+portrait_gradient = SubResource("Palette_inner_streets")
+
+[sub_resource type="Gradient" id="Gradient_roofs"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0636, 0.0562, 0.1397, 1, 0.4461, 0.2818, 0.7881, 1, 0.7615, 0.7600, 0.9390, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_roofs"]
+resource_name = "Signal roofs"
+gradient = SubResource("Gradient_roofs")
 
 [sub_resource type="Resource" id="Encounter_roofs"]
 script = ExtResource("3")
 title = "Signal roofs"
-enemies = Array[ExtResource("2")]([ExtResource("15"), ExtResource("16"), ExtResource("17")])
+random_enemy_count = 4
 map_stage = 6
 map_lane = -1
 next_lanes = Array[int]([-1])
+portrait_gradient = SubResource("Palette_roofs")
+
+[sub_resource type="Gradient" id="Gradient_barracks"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1583, 0.1656, 0.0584, 1, 0.5641, 0.7037, 0.1770, 1, 0.8683, 0.8980, 0.6955, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_barracks"]
+resource_name = "Barracks"
+gradient = SubResource("Gradient_barracks")
 
 [sub_resource type="Resource" id="Encounter_barracks"]
 script = ExtResource("3")
 title = "Barracks"
-enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("6"), ExtResource("5")])
+random_enemy_count = 4
 map_stage = 6
 next_lanes = Array[int]([-1, 0])
+portrait_gradient = SubResource("Palette_barracks")
+
+[sub_resource type="Gradient" id="Gradient_molting"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1477, 0.2356, 0.0610, 1, 0.2774, 0.7224, 0.1020, 1, 0.6680, 0.9109, 0.6484, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_molting"]
+resource_name = "Molting hall"
+gradient = SubResource("Gradient_molting")
 
 [sub_resource type="Resource" id="Encounter_molting"]
 script = ExtResource("3")
 title = "Molting hall"
-enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("4"), ExtResource("14")])
+random_enemy_count = 4
 map_stage = 6
 map_lane = 1
 next_lanes = Array[int]([0, 1])
+portrait_gradient = SubResource("Palette_molting")
+
+[sub_resource type="Gradient" id="Gradient_aviary"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0647, 0.1384, 0.1259, 1, 0.1800, 0.6591, 0.7275, 1, 0.7020, 0.8894, 0.8516, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_aviary"]
+resource_name = "Aviary"
+gradient = SubResource("Gradient_aviary")
 
 [sub_resource type="Resource" id="Encounter_aviary"]
 script = ExtResource("3")
 title = "Aviary"
-enemies = Array[ExtResource("2")]([ExtResource("16"), ExtResource("15"), ExtResource("17")])
+random_enemy_count = 4
 map_stage = 7
 map_lane = -1
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_aviary")
+
+[sub_resource type="Gradient" id="Gradient_procession"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.2139, 0.0736, 0.1462, 1, 0.7913, 0.2857, 0.3802, 1, 0.9308, 0.6941, 0.6816, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_procession"]
+resource_name = "Procession"
+gradient = SubResource("Gradient_procession")
 
 [sub_resource type="Resource" id="Encounter_procession"]
 script = ExtResource("3")
 title = "Procession"
-enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("6"), ExtResource("18")])
+random_enemy_count = 4
 map_stage = 7
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_procession")
+
+[sub_resource type="Gradient" id="Gradient_reliquary"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1415, 0.0526, 0.1017, 1, 0.7972, 0.1634, 0.4393, 1, 0.9353, 0.6326, 0.7259, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_reliquary"]
+resource_name = "Reliquary"
+gradient = SubResource("Gradient_reliquary")
 
 [sub_resource type="Resource" id="Encounter_reliquary"]
 script = ExtResource("3")
 title = "Reliquary"
-enemies = Array[ExtResource("2")]([ExtResource("5"), ExtResource("14"), ExtResource("18")])
+random_enemy_count = 4
 map_stage = 7
 map_lane = 1
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_reliquary")
+
+[sub_resource type="Gradient" id="Gradient_inner_gatekeeper"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.2012, 0.1644, 0.0943, 1, 0.6594, 0.6701, 0.2138, 1, 0.8963, 0.9335, 0.7940, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_inner_gatekeeper"]
+resource_name = "Inner gatekeeper"
+gradient = SubResource("Gradient_inner_gatekeeper")
 
 [sub_resource type="Resource" id="Encounter_inner_gatekeeper"]
 script = ExtResource("3")
@@ -141,60 +277,132 @@ enemies = Array[ExtResource("2")]([ExtResource("5"), ExtResource("11"), ExtResou
 map_stage = 8
 is_boss = true
 next_lanes = Array[int]([-1, 1])
+portrait_gradient = SubResource("Palette_inner_gatekeeper")
+
+[sub_resource type="Gradient" id="Gradient_spire"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1836, 0.0671, 0.0581, 1, 0.7878, 0.4232, 0.1422, 1, 0.9349, 0.7678, 0.6479, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_spire"]
+resource_name = "Spire stairs"
+gradient = SubResource("Gradient_spire")
 
 [sub_resource type="Resource" id="Encounter_spire"]
 script = ExtResource("3")
 title = "Spire stairs"
-enemies = Array[ExtResource("2")]([ExtResource("17"), ExtResource("16"), ExtResource("15"), ExtResource("5")])
+random_enemy_count = 4
 map_stage = 9
 map_lane = -1
 next_lanes = Array[int]([-1, 0])
+portrait_gradient = SubResource("Palette_spire")
+
+[sub_resource type="Gradient" id="Gradient_underkeep"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1588, 0.0677, 0.1652, 1, 0.8393, 0.1911, 0.6732, 1, 0.9230, 0.7147, 0.8980, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_underkeep"]
+resource_name = "Underkeep"
+gradient = SubResource("Gradient_underkeep")
 
 [sub_resource type="Resource" id="Encounter_underkeep"]
 script = ExtResource("3")
 title = "Underkeep"
-enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("13"), ExtResource("4"), ExtResource("14")])
+random_enemy_count = 4
 map_stage = 9
 map_lane = 1
 next_lanes = Array[int]([1])
+portrait_gradient = SubResource("Palette_underkeep")
+
+[sub_resource type="Gradient" id="Gradient_rookery"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.2194, 0.1506, 0.0477, 1, 0.6933, 0.6338, 0.1637, 1, 0.9526, 0.9403, 0.7659, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_rookery"]
+resource_name = "Rookery"
+gradient = SubResource("Gradient_rookery")
 
 [sub_resource type="Resource" id="Encounter_rookery"]
 script = ExtResource("3")
 title = "Rookery"
-enemies = Array[ExtResource("2")]([ExtResource("15"), ExtResource("16"), ExtResource("16"), ExtResource("17")])
+random_enemy_count = 4
 map_stage = 10
 map_lane = -1
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_rookery")
+
+[sub_resource type="Gradient" id="Gradient_parade"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1863, 0.0795, 0.1740, 1, 0.6551, 0.3195, 0.7859, 1, 0.8461, 0.7481, 0.9579, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_parade"]
+resource_name = "Parade ground"
+gradient = SubResource("Gradient_parade")
 
 [sub_resource type="Resource" id="Encounter_parade"]
 script = ExtResource("3")
 title = "Parade ground"
-enemies = Array[ExtResource("2")]([ExtResource("6"), ExtResource("18"), ExtResource("16"), ExtResource("5")])
+random_enemy_count = 4
 map_stage = 10
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_parade")
+
+[sub_resource type="Gradient" id="Gradient_hatchery"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1835, 0.0604, 0.1989, 1, 0.7650, 0.1521, 0.7198, 1, 0.9131, 0.6740, 0.9520, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_hatchery"]
+resource_name = "Hatchery"
+gradient = SubResource("Gradient_hatchery")
 
 [sub_resource type="Resource" id="Encounter_hatchery"]
 script = ExtResource("3")
 title = "Hatchery"
-enemies = Array[ExtResource("2")]([ExtResource("13"), ExtResource("14"), ExtResource("4"), ExtResource("14")])
+random_enemy_count = 4
 map_stage = 10
 map_lane = 1
 next_lanes = Array[int]([0, 1])
+portrait_gradient = SubResource("Palette_hatchery")
+
+[sub_resource type="Gradient" id="Gradient_citadel_streets"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0618, 0.1496, 0.1145, 1, 0.1840, 0.8495, 0.3503, 1, 0.6513, 0.9462, 0.7259, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_citadel_streets"]
+resource_name = "Citadel streets"
+gradient = SubResource("Gradient_citadel_streets")
 
 [sub_resource type="Resource" id="Encounter_citadel_streets"]
 script = ExtResource("3")
 title = "Citadel streets"
-enemies = Array[ExtResource("2")]([ExtResource("6"), ExtResource("5"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+random_enemy_count = 5
 map_stage = 11
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_citadel_streets")
+
+[sub_resource type="Gradient" id="Gradient_well"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0869, 0.1502, 0.1822, 1, 0.1856, 0.5159, 0.6356, 1, 0.7612, 0.8334, 0.9451, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_well"]
+resource_name = "Well of life"
+gradient = SubResource("Gradient_well")
 
 [sub_resource type="Resource" id="Encounter_well"]
 script = ExtResource("3")
 title = "Well of life"
-enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("5"), ExtResource("14"), ExtResource("17")])
+random_enemy_count = 5
 map_stage = 11
 map_lane = 1
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_well")
+
+[sub_resource type="Gradient" id="Gradient_citadel_lord"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.0754, 0.0566, 0.1467, 1, 0.1881, 0.2531, 0.7470, 1, 0.8017, 0.7628, 0.9625, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_citadel_lord"]
+resource_name = "Citadel lord"
+gradient = SubResource("Gradient_citadel_lord")
 
 [sub_resource type="Resource" id="Encounter_citadel_lord"]
 script = ExtResource("3")
@@ -203,18 +411,25 @@ enemies = Array[ExtResource("2")]([ExtResource("4"), ExtResource("6"), ExtResour
 map_stage = 12
 is_boss = true
 next_lanes = Array[int]([0])
+portrait_gradient = SubResource("Palette_citadel_lord")
+
+[sub_resource type="Gradient" id="Gradient_darius"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1440, 0.0598, 0.1423, 1, 0.6898, 0.1384, 0.6979, 1, 0.9177, 0.7006, 0.8588, 1)
+
+[sub_resource type="GradientTexture1D" id="Palette_darius"]
+resource_name = "Darius"
+gradient = SubResource("Gradient_darius")
 
 [sub_resource type="Resource" id="Encounter_darius"]
 script = ExtResource("3")
 title = "Darius"
-enemies = Array[ExtResource("2")]([ExtResource("18"), ExtResource("19"), ExtResource("16")])
+enemies = Array[ExtResource("2")]([ExtResource("7"), ExtResource("19"), ExtResource("11")])
 map_stage = 13
 is_boss = true
+portrait_gradient = SubResource("Palette_darius")
 
-[sub_resource type="Theme" id="Theme_prototype"]
-default_font_size = 26
-
-[node name="GameLoop" type="Control"]
+[node name="GameLoop" type="Control" unique_id=673801680]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -225,9 +440,10 @@ mouse_filter = 2
 theme = SubResource("Theme_prototype")
 script = ExtResource("1")
 starting_units = Array[ExtResource("2")]([ExtResource("4"), ExtResource("5"), ExtResource("6"), SubResource("Unit_test_99")])
+enemy_pool = Array[ExtResource("2")]([ExtResource("4"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("5"), ExtResource("6"), ExtResource("18")])
 encounters = Array[ExtResource("3")]([SubResource("Encounter_streets"), SubResource("Encounter_aqueduct"), SubResource("Encounter_burial"), SubResource("Encounter_cistern"), SubResource("Encounter_market"), SubResource("Encounter_ossuary"), SubResource("Encounter_gatekeeper"), SubResource("Encounter_inner_streets"), SubResource("Encounter_roofs"), SubResource("Encounter_barracks"), SubResource("Encounter_molting"), SubResource("Encounter_aviary"), SubResource("Encounter_procession"), SubResource("Encounter_reliquary"), SubResource("Encounter_inner_gatekeeper"), SubResource("Encounter_spire"), SubResource("Encounter_underkeep"), SubResource("Encounter_rookery"), SubResource("Encounter_parade"), SubResource("Encounter_hatchery"), SubResource("Encounter_citadel_streets"), SubResource("Encounter_well"), SubResource("Encounter_citadel_lord"), SubResource("Encounter_darius")])
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=1569488896]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -235,9 +451,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.10, 0.085, 0.075, 1)
+color = Color(0.1, 0.085, 0.075, 1)
 
-[node name="MapBackground" type="TextureRect" parent="."]
+[node name="MapBackground" type="TextureRect" parent="." unique_id=2055377424]
 visible = false
 self_modulate = Color(0.55, 0.55, 0.55, 1)
 layout_mode = 1
@@ -250,7 +466,7 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Screen" type="MarginContainer" parent="."]
+[node name="Screen" type="MarginContainer" parent="." unique_id=393589981]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -263,16 +479,16 @@ theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 64
 theme_override_constants/margin_bottom = 36
 
-[node name="World" type="Node2D" parent="."]
+[node name="World" type="Node2D" parent="." unique_id=694404281]
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1743936898]
 process_mode = 3
 script = ExtResource("8")
 
-[node name="PauseMenu" parent="UI" instance=ExtResource("9")]
+[node name="PauseMenu" parent="UI" unique_id=1447243378 instance=ExtResource("9")]
 visible = false
 
-[node name="SettingsMenu" parent="UI" instance=ExtResource("10")]
+[node name="SettingsMenu" parent="UI" unique_id=998826757 instance=ExtResource("10")]
 visible = false
 
 [connection signal="credits_menu_requested" from="UI/PauseMenu" to="UI" method="_on_pause_menu_credits_menu_requested"]

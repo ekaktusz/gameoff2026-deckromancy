@@ -12,19 +12,14 @@ signal drag_cancelled
 enum Look { ALLY, ENEMY, DEAD }
 
 const SIZE := Vector2(220, 300)
-const ART_RECT := Rect2(-100, -112, 200, 160)
-const ATTACK_BADGE := Vector2(-82, 122)
-const HP_BADGE := Vector2(82, 122)
-const BADGE_RADIUS := 26.0
-const BORDER_COLORS := {
-	Look.ALLY: Color(0.36, 0.52, 0.96),
-	Look.ENEMY: Color(0.88, 0.3, 0.28),
-	Look.DEAD: Color(0.55, 0.78, 0.38),
-}
-const BODY_COLOR := Color(0.13, 0.11, 0.1)
-const ART_COLOR := Color(0.8, 0.76, 0.68)
-const MARKED_TINT := Color(0.72, 0.95, 0.62)
-const POOP_PORTRAIT := preload("res://assets/poop_warrior.png")
+const ART_RECT := Rect2(-68, -100, 136, 142)
+const FRAMES := [
+	preload("res://assets/cards/card bg own transparent middle.png"),
+	preload("res://assets/cards/card bg own transparent middle broken.png"),
+	preload("res://assets/cards/card bg own transparent middle broken 2.png"),
+	preload("res://assets/cards/card bg own transparent middle broken 3.png"),
+]
+const POOP_PORTRAIT := preload("res://assets/units/poop_warrior.png")
 const DIMMED := Color(0.5, 0.5, 0.5)
 const HIT_FLASH := Color(1.7, 0.5, 0.45)
 const HOVER_SFX := preload("res://assets/sfx/hover.tres")
@@ -32,6 +27,8 @@ const SELECT_SFX := preload("res://assets/sfx/select.wav")
 const DRAG_THRESHOLD := 10.0
 const HOVER_Z := 5
 const DRAG_Z := 30
+
+static var _opaque_bounds: Dictionary[Texture2D, Rect2] = {}
 
 var unit: UnitState
 var look: Look = Look.ALLY
@@ -41,13 +38,11 @@ var clickable: bool = false:
 		clickable = value
 		if not clickable and not draggable:
 			_cancel_pointer()
-		queue_redraw()
 var draggable: bool = false:
 	set(value):
 		draggable = value
 		if not draggable and (_dragging or not clickable):
 			_cancel_pointer()
-		queue_redraw()
 var hover_enabled: bool = true:
 	set(value):
 		hover_enabled = value
@@ -69,6 +64,7 @@ var base_scale: Vector2 = Vector2.ONE:
 		scale = value
 
 var _marks: int = 0
+var _portrait_gradient: GradientTexture1D
 var _hovered: bool = false
 var _hover_tween: Tween
 var _pop_tween: Tween
@@ -76,10 +72,11 @@ var _pressed: bool = false
 var _dragging: bool = false
 var _press_position: Vector2
 var _drag_origin: Vector2
-var _body_style := StyleBoxFlat.new()
 
 @onready var _portrait: Sprite2D = $Portrait
+@onready var _default_portrait_material := _portrait.material as ShaderMaterial
 @onready var _plant_overlay: Sprite2D = $Portrait/PlantOverlay
+@onready var _frame: Sprite2D = $Frame
 @onready var _marks_layer: Node2D = $Marks
 @onready var _name: Label = $Name
 @onready var _faction: Label = $Faction
@@ -89,12 +86,19 @@ var _body_style := StyleBoxFlat.new()
 
 
 func _ready() -> void:
-	_body_style.bg_color = BODY_COLOR
-	_body_style.set_corner_radius_all(14)
-	_body_style.shadow_color = Color(0, 0, 0, 0.45)
-	_body_style.shadow_size = 8
-	_body_style.shadow_offset = Vector2(0, 4)
 	_marks_layer.draw.connect(_draw_marks)
+
+
+func _set_portrait_gradient(gradient: GradientTexture1D) -> void:
+	if gradient == _portrait_gradient:
+		return
+	_portrait_gradient = gradient
+	if gradient == null:
+		_portrait.material = _default_portrait_material
+		return
+	var gradient_material := _default_portrait_material.duplicate() as ShaderMaterial
+	gradient_material.set_shader_parameter("gradient_map", gradient)
+	_portrait.material = gradient_material
 
 
 ## Shows a unit. With `for_revival` it previews the unit as it would come back
@@ -103,6 +107,7 @@ func _ready() -> void:
 func display(unit_state: UnitState, card_look: Look, for_revival: bool = false) -> void:
 	unit = unit_state
 	look = card_look
+	_set_portrait_gradient(unit.portrait_gradient)
 	var stats := (
 		unit.revival_stats() if for_revival else Vector2i(unit.combat_attack(), unit.combat_hp())
 	)
@@ -114,9 +119,9 @@ func display(unit_state: UnitState, card_look: Look, for_revival: bool = false) 
 	_ability.text = "" if is_poop else UnitDefinition.ABILITY_DESCRIPTIONS.get(ability, "")
 	_attack.text = str(stats.x)
 	_hp.text = str(stats.y)
+	_frame.texture = FRAMES[clampi(_marks - 1, 0, FRAMES.size() - 1)]
 	_marks_layer.queue_redraw()
 	_update_portrait(is_poop)
-	queue_redraw()
 
 
 func _update_portrait(is_poop: bool) -> void:
@@ -126,11 +131,8 @@ func _update_portrait(is_poop: bool) -> void:
 	var tint := Color.WHITE if is_poop else definition.portrait_tint
 	_plant_overlay.texture = overlay
 	_plant_overlay.visible = overlay != null and unit.marks > 0
-	if not is_poop and _marks > 0 and overlay == null:
-		if definition.marked_portrait != null:
-			texture = definition.marked_portrait
-		else:
-			tint *= MARKED_TINT
+	if not is_poop and _marks > 0 and overlay == null and definition.marked_portrait != null:
+		texture = definition.marked_portrait
 
 	_portrait.visible = texture != null
 	if texture == null:
@@ -138,29 +140,37 @@ func _update_portrait(is_poop: bool) -> void:
 	_portrait.texture = texture
 	_portrait.self_modulate = tint
 	_plant_overlay.self_modulate = tint
-	_portrait.position = ART_RECT.get_center()
-	var fit := minf(ART_RECT.size.x / texture.get_width(), ART_RECT.size.y / texture.get_height())
+	var bounds := _texture_bounds(texture)
+	if overlay != null:
+		# Use the same fit before and after a MARK so the art and plant stay aligned.
+		bounds = bounds.merge(_texture_bounds(overlay))
+	var fit := minf(ART_RECT.size.x / bounds.size.x, ART_RECT.size.y / bounds.size.y)
+	var art_offset := texture.get_size() / 2.0 - bounds.get_center()
+	_portrait.position = ART_RECT.get_center() + art_offset * fit
 	_portrait.scale = Vector2(fit, fit)
 
 
-func _draw() -> void:
-	var rect := Rect2(-SIZE / 2, SIZE)
-	var border: Color = BORDER_COLORS[look]
-	var highlighted := selected or ((clickable or draggable) and _hovered)
-	_body_style.border_color = border.lightened(0.45) if highlighted else border
-	_body_style.set_border_width_all(7 if highlighted else 4)
-	draw_style_box(_body_style, rect)
-	draw_rect(ART_RECT, ART_COLOR)
+func _texture_bounds(texture: Texture2D) -> Rect2:
+	if not _opaque_bounds.has(texture):
+		var bounds := Rect2(Vector2.ZERO, texture.get_size())
+		var image := texture.get_image()
+		if image != null and not image.is_compressed():
+			var used := image.get_used_rect()
+			if used.has_area():
+				bounds = Rect2(used)
+		_opaque_bounds[texture] = bounds
+	return _opaque_bounds[texture]
 
-	draw_circle(ATTACK_BADGE, BADGE_RADIUS, Color(0.78, 0.6, 0.18))
-	draw_circle(HP_BADGE, BADGE_RADIUS, Color(0.72, 0.18, 0.18))
+
+func _draw() -> void:
+	if selected:
+		draw_rect(Rect2(-SIZE / 2, SIZE).grow(3.0), Color.WHITE, false, 2.0)
 
 
 func _draw_marks() -> void:
 	for mark in mini(_marks, UnitState.POOP_MARKS):
-		var pip := ART_RECT.position + Vector2(14, 14 + mark * 19)
-		_marks_layer.draw_circle(pip, 8, Color(0.1, 0.1, 0.1))
-		_marks_layer.draw_circle(pip, 5.5, Color(0.65, 1.0, 0.36))
+		var pip := Vector2(77, -92 + mark * 29)
+		_marks_layer.draw_circle(pip, 5.0, Color(0.65, 1.0, 0.36))
 
 
 func _process(_delta: float) -> void:
@@ -193,7 +203,6 @@ func _set_hovered(value: bool, immediate: bool = false) -> void:
 	else:
 		_hover_tween = create_tween()
 		_hover_tween.tween_property(self, "scale", target_scale, 0.12)
-	queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
